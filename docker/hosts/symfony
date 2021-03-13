@@ -14,6 +14,11 @@ location ~ ^/index\.php(/|$) {
     fastcgi_read_timeout 240s;
     include fastcgi_params;
 
+    fastcgi_buffer_size 10240k;
+    fastcgi_buffers 4 10240k;
+    fastcgi_busy_buffers_size 10240k;
+    client_body_timeout 1200;
+
     # optionally set the value of the environment variables used in the application
     # fastcgi_param APP_ENV prod;
     # fastcgi_param APP_SECRET <app-secret-id>;
