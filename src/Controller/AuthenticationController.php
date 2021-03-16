@@ -7,7 +7,6 @@ use App\Model\User as UserDto;
 use App\Model\AuthToken;
 use JMS\Serializer\SerializerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
-use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -29,8 +28,6 @@ class AuthenticationController extends ApiController
      * @param ValidatorInterface $validator
      * @return Response
      * @Route("/register", name="app_register", methods={"POST"})
-     *
-     * @
      */
     public function register(
         Request $request,
@@ -63,7 +60,7 @@ class AuthenticationController extends ApiController
     /**
      * @Route("/auth", name="app_authenticate")
      */
-    public function authenticate()
+    public function authenticate(): void
     {
         // Implemented by JWTAuthentication
     }

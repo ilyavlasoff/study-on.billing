@@ -21,11 +21,16 @@ abstract class ApiController extends AbstractController
         }
 
         $failResponse = new FailResponse($errors);
-        return new JsonResponse($serializer->serialize($failResponse, 'json'), Response::HTTP_BAD_REQUEST);
+        return new JsonResponse(
+            $serializer->serialize($failResponse, 'json'),
+            Response::HTTP_BAD_REQUEST,
+            [],
+            true
+        );
     }
 
     protected function serializedResponse($data, SerializerInterface $serializer, $status = Response::HTTP_OK): Response
     {
-        return new JsonResponse($serializer->serialize($data, 'json'), $status);
+        return new JsonResponse($serializer->serialize($data, 'json'), $status, [], true);
     }
 }

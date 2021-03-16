@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use JMS\Serializer\SerializerInterface;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -22,7 +23,7 @@ class UserController extends ApiController
     /**
      * @Route("/current", name="api_current_user")
      */
-    public function currentUser()
+    public function currentUser(): Response
     {
         $user = $this->getUser();
         return $this->serializedResponse($user, $this->serializer);

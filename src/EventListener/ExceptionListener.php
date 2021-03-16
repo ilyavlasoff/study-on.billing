@@ -3,7 +3,6 @@
 namespace App\EventListener;
 
 use App\Model\FailResponse;
-use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;

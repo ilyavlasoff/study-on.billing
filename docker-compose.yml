@@ -3,6 +3,7 @@ volumes:
   postgres: ~
 services:
   nginx:
+    container_name: billing.study-on.local
     image: nginx:alpine
     working_dir: /app
     volumes:
