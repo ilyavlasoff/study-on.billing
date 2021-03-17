@@ -64,7 +64,7 @@ class AuthenticationTest extends AbstractTest
         $authenticatedUser->setPassword('!23SuperP@$$w0rd32');
         $authenticationData = $this->serializer->serialize($authenticatedUser, 'json');
 
-        $client->request('post', $regUrl, [], [], ['Content-type' => 'application/json'], $authenticationData);
+        $client->request('post', $regUrl, [], [], ['CONTENT_TYPE' => 'application/json'], $authenticationData);
 
         $this->assertJsonResponse($client->getResponse(), 201);
         $responseData = $client->getResponse()->getContent();
@@ -123,7 +123,7 @@ class AuthenticationTest extends AbstractTest
             $authenticatedUser->setPassword($data['password']);
             $authenticationData = $this->serializer->serialize($authenticatedUser, 'json');
 
-            $client->request('post', $regUrl, [], [], ['Content-type' => 'application/json'], $authenticationData);
+            $client->request('post', $regUrl, [], [], ['CONTENT_TYPE' => 'application/json'], $authenticationData);
 
             $this->assertJsonResponse($client->getResponse(), 400);
             $responseData = $client->getResponse()->getContent();
@@ -140,9 +140,16 @@ class AuthenticationTest extends AbstractTest
     {
         $client = self::getClient();
         $regUrl = $client->getContainer()->get('router')->generate('app_authenticate');
-        $authenticationData = "{\"username\":\"user@test.com\",\"password\":\"passwd\"}";
+        $authenticationData = ['username' => 'user@test.com','password' => 'passwd'];
 
-        $client->request('post', $regUrl, [], [], ['Content-Type' => 'application/json'], $authenticationData);
+        $client->request(
+            'post',
+            $regUrl,
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($authenticationData)
+        );
 
         $this->assertJsonResponse($client->getResponse(), 200);
         $responseData = $client->getResponse()->getContent();
@@ -155,5 +162,25 @@ class AuthenticationTest extends AbstractTest
 
     public function testIncorrectLogin(): void
     {
+        $client = self::getClient();
+        $regUrl = $client->getContainer()->get('router')->generate('app_authenticate');
+
+        $authenticationData = ['username' => 'qwerty','password' => 'qwerty'];
+
+        $client->request(
+            'post',
+            $regUrl,
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($authenticationData)
+        );
+
+        $this->assertJsonResponse($client->getResponse(), 401);
+        $responseData = $client->getResponse()->getContent();
+
+        /** @var  $auth */
+        $auth = json_decode($responseData, true);
+        self::assertEquals('Invalid credentials.', $auth['message']);
     }
 }
