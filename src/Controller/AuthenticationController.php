@@ -12,6 +12,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Swagger\Annotations as SWG;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
 
 /**
  * Class AuthenticationController
@@ -28,6 +31,32 @@ class AuthenticationController extends ApiController
      * @param ValidatorInterface $validator
      * @return Response
      * @Route("/register", name="app_register", methods={"POST"})
+     *
+     * @SWG\Post(
+     *     path="/api/v1/register",
+     *     summary="Registration",
+     *     description="Register new billing user",
+     *     produces={"application/json"},
+     *     consumes={"application/json"},
+     *     @SWG\Parameter(
+     *          type="application/json",
+     *          format="application/json",
+     *          in="body",
+     *          name="",
+     *          description="Registration credentials",
+     *          @SWG\Schema(ref=@Model(type="App\Model\User::class"))
+     *     ),
+     *     @SWG\Response(
+     *          response=201,
+     *          description="Successfull authorization",
+     *          @SWG\Schema(ref=@Model(type="App\Model\AuthToken::class"))
+     *     ),
+     *     @SWG\Response(
+     *          response=401,
+     *          description="Unauthorized",
+     *          @SWG\Schema(ref=@Model(type="App\Model\FailResponse::class"))
+     *     )
+     * )
      */
     public function register(
         Request $request,
@@ -58,7 +87,31 @@ class AuthenticationController extends ApiController
     }
 
     /**
-     * @Route("/auth", name="app_authenticate")
+     * @Route("/auth", name="app_authenticate", methods={"POST"})
+     * @SWG\Post(
+     *     path="/api/v1/auth",
+     *     summary="Authenticate user",
+     *     description="Authenticate user with login and password",
+     *     produces={"application/json"},
+     *     consumes={"application/json"},
+     *     @SWG\Parameter(
+     *          type="application/json",
+     *          in="body",
+     *          name="",
+     *          description="User credentials",
+     *          @SWG\Schema(ref=@Model(type="App\Model\User::class"))
+     *     ),
+     *     @SWG\Response(
+     *          response=201,
+     *          description="Success",
+     *          @SWG\Schema(ref=@Model(type="App\Model\AuthToken::class"))
+     *      ),
+     *     @SWG\Response(
+     *          response=401,
+     *          description="Unauthorized",
+     *          @SWG\Schema(ref=@Model(type="App\Model\FailResponse::class"))
+     *     )
+     * )
      */
     public function authenticate(): void
     {

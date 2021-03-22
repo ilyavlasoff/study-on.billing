@@ -99,6 +99,9 @@
     "friendsofphp/proxy-manager-lts": {
         "version": "v1.0.3"
     },
+    "gesdinet/jwt-refresh-token-bundle": {
+        "version": "v0.11.1"
+    },
     "jms/metadata": {
         "version": "2.5.0"
     },
