@@ -29,8 +29,11 @@ abstract class ApiController extends AbstractController
         );
     }
 
-    protected function serializedResponse($data, SerializerInterface $serializer, $status = Response::HTTP_OK): Response
-    {
+    protected function serializedResponse(
+        $data,
+        SerializerInterface $serializer,
+        $status = Response::HTTP_OK
+    ): JsonResponse {
         return new JsonResponse($serializer->serialize($data, 'json'), $status, [], true);
     }
 }

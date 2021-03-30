@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Model\User as UserDto;
 use App\Model\AuthToken;
+use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
+use Gesdinet\JWTRefreshTokenBundle\Service\RefreshToken;
 use JMS\Serializer\SerializerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,8 +30,11 @@ class AuthenticationController extends ApiController
      * @param UserPasswordEncoderInterface $userPasswordEncoder
      * @param SerializerInterface $serializer
      * @param JWTTokenManagerInterface $tokenManager
+     * @param RefreshTokenManagerInterface $refreshTokenManager
      * @param ValidatorInterface $validator
      * @return Response
+     * @throws \Exception
+     *
      * @Route("/register", name="app_register", methods={"POST"})
      *
      * @SWG\Post(
@@ -63,6 +68,7 @@ class AuthenticationController extends ApiController
         UserPasswordEncoderInterface $userPasswordEncoder,
         SerializerInterface $serializer,
         JWTTokenManagerInterface $tokenManager,
+        RefreshTokenManagerInterface $refreshTokenManager,
         ValidatorInterface $validator
     ): Response {
         $userCredentials = $serializer->deserialize($request->getContent(), UserDto::class, 'json');
@@ -81,8 +87,16 @@ class AuthenticationController extends ApiController
         $manager->persist($user);
         $manager->flush();
 
-        $token = $tokenManager->create($user);
-        $tokenResponse = new AuthToken($token, $user->getRoles());
+        $jwtToken = $tokenManager->create($user);
+
+        $refreshToken = $refreshTokenManager->create();
+        $refreshToken->setUsername($user->getEmail());
+        $refreshToken->setRefreshToken();
+        $nowPlusOneMonth = (new \DateTime())->add(new \DateInterval('P1M'));
+        $refreshToken->setValid($nowPlusOneMonth);
+        $refreshTokenManager->save($refreshToken);
+
+        $tokenResponse = new AuthToken($jwtToken, $refreshToken->getRefreshToken(), $user->getRoles());
         return $this->serializedResponse($tokenResponse, $serializer, Response::HTTP_CREATED);
     }
 
@@ -116,5 +130,37 @@ class AuthenticationController extends ApiController
     public function authenticate(): void
     {
         // Implemented by JWTAuthentication
+    }
+
+    /**
+     * @Route("/token/refresh", name="jwt_refresh", methods={"POST"})
+     *
+     * @SWG\Post(
+     *     path="/api/v1/token/refresh",
+     *     summary="JWT token update",
+     *     description="Method for update JWT authentication token",
+     *     produces={"application/json"},
+     *     consumes={"application/json"},
+     *     @SWG\Parameter(
+     *          type="string",
+     *          in="body",
+     *          name="refresh_token",
+     *          description="Refresh token for current JWT update"
+     *     ),
+     *     @SWG\Response(
+     *          response=201,
+     *          description="Success",
+     *          @SWG\Schema(ref=@Model(type="App\Model\AuthToken::class"))
+     *      ),
+     *     @SWG\Response(
+     *          response=401,
+     *          description="Unauthorized",
+     *          @SWG\Schema(ref=@Model(type="App\Model\FailResponse::class"))
+     *     )
+     * )
+     */
+    public function refreshToken(Request $request, RefreshToken $refreshToken): Response
+    {
+        return $refreshToken->refresh($request);
     }
 }

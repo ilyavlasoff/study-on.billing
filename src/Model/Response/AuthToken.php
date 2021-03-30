@@ -16,14 +16,20 @@ class AuthToken
     private $token;
 
     /**
+     * @Serializer\Type("string")
+     */
+    private $refreshToken;
+
+    /**
      * @Serializer\Type("array")
      */
     private $roles;
 
-    public function __construct(string $token, array $roles)
+    public function __construct(string $token, string $refreshToken, array $roles)
     {
         $this->token = $token;
         $this->roles = $roles;
+        $this->refreshToken = $refreshToken;
     }
 
     /**
@@ -57,5 +63,23 @@ class AuthToken
     {
         $this->roles = $roles;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getRefreshToken()
+    {
+        return $this->refreshToken;
+    }
+
+    /**
+     * @param mixed $refreshToken
+     */
+    public function setRefreshToken($refreshToken): void
+    {
+        $this->refreshToken = $refreshToken;
+    }
+
+
 
 }

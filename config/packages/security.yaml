@@ -12,7 +12,7 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         login:
-            pattern: ^/api/v1/(auth|register)
+            pattern: ^/api/v1/(auth|register|token/refresh)
             stateless: true
             anonymous: true
             json_login:
@@ -21,6 +21,9 @@ security:
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
         docs:
             pattern: ^/api/v1/doc
+            anonymous: true
+        public:
+            pattern: ^/api/v1/(courses)
             anonymous: true
         api:
             pattern: ^/api/v1
@@ -33,4 +36,6 @@ security:
          - { path: ^/api/v1/auth, roles: IS_AUTHENTICATED_ANONYMOUSLY }
          - { path: ^/api/v1/register, roles: IS_AUTHENTICATED_ANONYMOUSLY }
          - { path: ^/api/v1/doc, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+         - { path: ^/api/v1/token/refresh, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+         - { path: ^/api/v1/courses, roles: IS_AUTHENTICATED_ANONYMOUSLY }
          - { path: ^/api/v1, roles: IS_AUTHENTICATED_FULLY }
