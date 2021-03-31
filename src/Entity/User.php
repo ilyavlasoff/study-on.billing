@@ -11,7 +11,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use App\Model\User as UserDto;
-use Swagger\Annotations as SWG;
+use OpenApi\Annotations as OA;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
@@ -21,6 +21,10 @@ use Swagger\Annotations as SWG;
  *   message="User with email {{ value }} is already exists. Try to login instead"
  * )
  * @Serializer\ExclusionPolicy("all")
+ * @OA\Schema(
+ *     title="User entity",
+ *     description="Contains all user fields"
+ * )
  */
 class User implements UserInterface
 {
@@ -28,7 +32,7 @@ class User implements UserInterface
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
-     * @SWG\Property(description="The unique database identifier of user")
+     * @OA\Property(format="int64", title="Id", description="The unique database identifier of user")
      */
     private $id;
 
@@ -36,14 +40,14 @@ class User implements UserInterface
      * @ORM\Column(type="string", length=180, unique=true)
      * @Serializer\Expose()
      * @Serializer\SerializedName("username")
-     * @SWG\Property(type="string", maxLength=180, description="User unique email")
+     * @OA\Property(type="string", title="E-mail", maxLength=180, description="User unique email")
      */
     private $email;
 
     /**
      * @ORM\Column(type="json")
      * @Serializer\Expose()
-     * @SWG\Property(type="array", description="Array of user action permissions ")
+     * @OA\Property(type="array", type="string", title="Roles", description="Array of user action permissions")
      */
     private $roles = [];
 
@@ -57,7 +61,7 @@ class User implements UserInterface
      * @var float
      * @ORM\Column(type="float")
      * @Serializer\Expose()
-     * @SWG\Property(type="float", description="Cash amount available in user account")
+     * @OA\Property(type="float", title="Balance", description="Cash amount available in user account", example="23.93")
      */
     private $balance;
 

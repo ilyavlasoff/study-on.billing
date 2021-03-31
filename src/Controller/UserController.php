@@ -3,11 +3,11 @@
 namespace App\Controller;
 
 use JMS\Serializer\SerializerInterface;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-use Swagger\Annotations as SWG;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use OpenApi\Annotations as OA;
 use App\Entity\User;
 
 /**
@@ -26,25 +26,16 @@ class UserController extends ApiController
 
     /**
      * @Route("/current", name="api_current_user", methods={"GET"})
-     * @SWG\Get(
+     *
+     * @OA\Get(
      *     path="/api/v1/users/current",
-     *     summary="Get current user",
-     *     description="Get logged in user object",
-     *     produces={"application/json"},
-     *     @SWG\Response(
-     *          response=200,
-     *          description="Success",
-     *          @SWG\Schema(ref=@Model(type="App\Entity\User::class"))
-     *     ),
-     *     @SWG\Response(
-     *          response=401,
-     *          description="Unauthorized",
-     *          @SWG\Schema(
-     *              type="application/json",
-     *              @SWG\Property(property="code", type="integer"),
-     *              @SWG\Property(property="message", type="string")
-     *          )
-     *     )
+     *     summary="Authenticated user object",
+     *     @Security(name="Bearer"),
+     *     @OA\Response(
+     *          response="200",
+     *          description="User object",
+     *          @OA\JsonContent(ref=@Model(type=User::class, groups={"Default"}))
+     *      )
      * )
      */
     public function currentUser(): Response

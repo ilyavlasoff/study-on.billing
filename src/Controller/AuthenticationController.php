@@ -5,18 +5,19 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Model\User as UserDto;
 use App\Model\AuthToken;
+use App\Model\FailResponse;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Gesdinet\JWTRefreshTokenBundle\Service\RefreshToken;
 use JMS\Serializer\SerializerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Swagger\Annotations as SWG;
+use OpenApi\Annotations as OA;
 use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
 
 /**
  * Class AuthenticationController
@@ -37,29 +38,33 @@ class AuthenticationController extends ApiController
      *
      * @Route("/register", name="app_register", methods={"POST"})
      *
-     * @SWG\Post(
+     * @OA\Post(
      *     path="/api/v1/register",
-     *     summary="Registration",
-     *     description="Register new billing user",
-     *     produces={"application/json"},
-     *     consumes={"application/json"},
-     *     @SWG\Parameter(
-     *          type="application/json",
-     *          format="application/json",
-     *          in="body",
-     *          name="",
-     *          description="Registration credentials",
-     *          @SWG\Schema(ref=@Model(type="App\Model\User::class"))
+     *     summary="New user registration",
+     *     @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(
+     *                  property="email",
+     *                  type="string",
+     *                  example="ilya@test.com"
+     *              ),
+     *              @OA\Property(
+     *                  property="password",
+     *                  type="string",
+     *                  example="#123SuperStrongPassword321#"
+     *              )
+     *          )
      *     ),
-     *     @SWG\Response(
+     *     @OA\Response(
      *          response=201,
-     *          description="Successfull authorization",
-     *          @SWG\Schema(ref=@Model(type="App\Model\AuthToken::class"))
+     *          description="Successful authorization",
+     *          @OA\JsonContent(ref=@Model(type=AuthToken::class, groups={"Default"}))
      *     ),
-     *     @SWG\Response(
+     *     @OA\Response(
      *          response=401,
      *          description="Unauthorized",
-     *          @SWG\Schema(ref=@Model(type="App\Model\FailResponse::class"))
+     *          @OA\JsonContent(ref=@Model(type=FailResponse::class, groups={"Default"}))
      *     )
      * )
      */
@@ -102,29 +107,35 @@ class AuthenticationController extends ApiController
 
     /**
      * @Route("/auth", name="app_authenticate", methods={"POST"})
-     * @SWG\Post(
+     *
+     * @OA\Post(
      *     path="/api/v1/auth",
-     *     summary="Authenticate user",
-     *     description="Authenticate user with login and password",
-     *     produces={"application/json"},
-     *     consumes={"application/json"},
-     *     @SWG\Parameter(
-     *          type="application/json",
-     *          in="body",
-     *          name="",
-     *          description="User credentials",
-     *          @SWG\Schema(ref=@Model(type="App\Model\User::class"))
-     *     ),
-     *     @SWG\Response(
-     *          response=201,
-     *          description="Success",
-     *          @SWG\Schema(ref=@Model(type="App\Model\AuthToken::class"))
+     *     summary="User authentication",
+     *     @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(
+     *                  property="username",
+     *                  type="string",
+     *                  example="ilya@test.com"
+     *              ),
+     *              @OA\Property(
+     *                  property="password",
+     *                  type="string",
+     *                  example="#123SuperStrongPassword321#"
+     *              )
+     *          )
      *      ),
-     *     @SWG\Response(
-     *          response=401,
-     *          description="Unauthorized",
-     *          @SWG\Schema(ref=@Model(type="App\Model\FailResponse::class"))
-     *     )
+     *     @OA\Response(
+     *          response="200",
+     *          description="User authentication token",
+     *          @OA\JsonContent(ref=@Model(type=AuthToken::class, groups={"Default"}))
+     *      ),
+     *     @OA\Response(
+     *          response="401",
+     *          description="Unauthorized message",
+     *          @OA\JsonContent(ref=@Model(type=FailResponse::class, groups={"Default"}))
+     *      )
      * )
      */
     public function authenticate(): void
@@ -133,30 +144,36 @@ class AuthenticationController extends ApiController
     }
 
     /**
+     * @param Request $request
+     * @param RefreshToken $refreshToken
+     * @return Response
+     *
      * @Route("/token/refresh", name="jwt_refresh", methods={"POST"})
      *
-     * @SWG\Post(
+     * @OA\Post(
      *     path="/api/v1/token/refresh",
-     *     summary="JWT token update",
-     *     description="Method for update JWT authentication token",
-     *     produces={"application/json"},
-     *     consumes={"application/json"},
-     *     @SWG\Parameter(
-     *          type="string",
-     *          in="body",
-     *          name="refresh_token",
-     *          description="Refresh token for current JWT update"
-     *     ),
-     *     @SWG\Response(
-     *          response=201,
-     *          description="Success",
-     *          @SWG\Schema(ref=@Model(type="App\Model\AuthToken::class"))
+     *     summary="Jwt token refresh method",
+     *     @Security(name="Bearer"),
+     *     @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(
+     *                  property="refresh_token",
+     *                  type="string",
+     *                  example="sjkalfhupt7322834py7324p823hfhjsdhf"
+     *              )
+     *          )
      *      ),
-     *     @SWG\Response(
-     *          response=401,
-     *          description="Unauthorized",
-     *          @SWG\Schema(ref=@Model(type="App\Model\FailResponse::class"))
-     *     )
+     *     @OA\Response(
+     *          response="200",
+     *          description="Successfully updated JWT token",
+     *          @OA\JsonContent(ref=@Model(type=AuthToken::class, groups={"Default"}))
+     *      ),
+     *      @OA\Response(
+     *          response="401",
+     *          description="Unauthorized message",
+     *          @OA\JsonContent(ref=@Model(type=FailResponse::class, groups={"Default"}))
+     *      )
      * )
      */
     public function refreshToken(Request $request, RefreshToken $refreshToken): Response

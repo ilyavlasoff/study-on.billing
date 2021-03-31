@@ -6,7 +6,9 @@ use App\Entity\Course;
 use App\Entity\Transaction;
 use App\Entity\User;
 use App\Model\CoursePaymentDto;
+use App\Model\OwnedCourseDto;
 use App\Model\TransactionHistoryDto;
+use App\Repository\CourseRepository;
 use App\Repository\TransactionRepository;
 use App\Service\PaymentService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -34,16 +36,36 @@ class PaymentController extends ApiController
      * @Route("/courses", name="course_list", methods={"GET"})
      */
     public function courseList(
-        Request $request,
         SerializerInterface $serializer,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        CourseRepository $courseRepository
     ): JsonResponse {
-        $allCourses = $entityManager->getRepository(Course::class)->findAll();
+        $foundedCourseItems = $entityManager->getRepository(Course::class)->findAll();
 
         return new JsonResponse($serializer->serialize(
-            $allCourses,
+            $foundedCourseItems,
             'json',
-            SerializationContext::create()->setInitialType('array<App\Entity\Course>')
+            SerializationContext::create()->setInitialType('array<App\Model\Course>')
+        ), Response::HTTP_OK, [], true);
+    }
+
+    /**
+     * @param SerializerInterface $serializer
+     * @param CourseRepository $courseRepository
+     * @return JsonResponse
+     * @throws \Doctrine\DBAL\DBALException
+     * @Route("/labeled-courses", name="labeled_courses", methods={"GET"})
+     */
+    public function coursesWithOwningLabels(SerializerInterface $serializer, CourseRepository $courseRepository)
+    {
+        $user = $this->getUser();
+
+        $courses = $courseRepository->getCoursesList($user);
+
+        return new JsonResponse($serializer->serialize(
+            $courses,
+            'json',
+            SerializationContext::create()->setInitialType('array<App\Model\OwnedCourseDto>')
         ), Response::HTTP_OK, [], true);
     }
 
@@ -76,22 +98,45 @@ class PaymentController extends ApiController
     }
 
     /**
-     * @param $id
+     * @param $code
      * @param EntityManagerInterface $entityManager
      * @param SerializerInterface $serializer
+     * @param CourseRepository $courseRepository
      * @return JsonResponse
      * @throws EntityNotFoundException
+     * @throws \Doctrine\DBAL\DBALException
      * @Route("/courses/{code}", name="course_item", methods={"GET"})
      */
-    public function course($code, EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse
-    {
+    public function courseItem(
+        $code,
+        EntityManagerInterface $entityManager,
+        SerializerInterface $serializer,
+        CourseRepository $courseRepository
+    ): JsonResponse {
         $course = $entityManager->getRepository(Course::class)->findOneBy(['code' => $code]);
 
         if (!$course) {
             throw new EntityNotFoundException('Course not found');
         }
 
-        return $this->serializedResponse($course, $serializer, Response::HTTP_OK);
+        $ownedCourse = new OwnedCourseDto($course);
+        var_dump(gettype($this->getUser()));
+
+        if (($user = $this->getUser()) instanceof User) {
+            $owning = $courseRepository->getUserOwning($user, $course);
+
+            if ($owning) {
+                $ownedCourse->setOwned(true);
+
+                if ($endOwningTime = $owning['valid']) {
+                    $ownedCourse->setOwnedUntil($endOwningTime);
+                }
+            } else {
+                $ownedCourse->setOwned(false);
+            }
+        }
+
+        return $this->serializedResponse($ownedCourse, $serializer, Response::HTTP_OK);
     }
 
     /**

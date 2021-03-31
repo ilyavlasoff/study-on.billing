@@ -3,25 +3,46 @@
 namespace App\Model;
 
 use JMS\Serializer\Annotation as Serializer;
+use OpenApi\Annotations as OA;
 
 /**
  * Class AuthToken
  * @package App\Model
+ *
+ * @OA\Schema(
+ *     title="Authentication and refresh tokens",
+ *     description="Contains JWT authentication token, refresh token and allowed roles for logged in user"
+ * )
  */
 class AuthToken
 {
     /**
      * @Serializer\Type("string")
+     * @OA\Property(
+     *     format="string",
+     *     title="JWT token",
+     *     description="Base64 encoded token using for authorization"
+     * )
      */
     private $token;
 
     /**
      * @Serializer\Type("string")
+     * @OA\Property(
+     *     format="string",
+     *     title="Refresh token",
+     *     description="Toekn using for refreshing JWT"
+     * )
      */
     private $refreshToken;
 
     /**
      * @Serializer\Type("array")
+     * @OA\Property(
+     *     format="array",
+     *     title="Roles",
+     *     description="Roles defines allowed operations group for authenticated user"
+     * )
      */
     private $roles;
 

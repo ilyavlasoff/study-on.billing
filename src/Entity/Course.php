@@ -29,6 +29,7 @@ class Course
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      * @JMS\Exclude()
+     * @var int
      */
     private $id;
 
@@ -37,6 +38,7 @@ class Course
      * @Assert\NotBlank()
      * @Assert\Length(max="255", maxMessage="Maximal code string length is {{ limit }} symbols, given {{ value }}")
      * @JMS\Groups("retrieve", "change")
+     * @var string
      */
     private $code;
 
@@ -50,6 +52,7 @@ class Course
     /**
      * @ORM\Column(type="string", length=255, nullable=false)
      * @JMS\Groups("change")
+     * @var string
      */
     private $title;
 
@@ -57,12 +60,14 @@ class Course
      * @ORM\Column(type="float", nullable=true)
      * @JMS\Groups("retrieve", "change")
      * @JMS\SerializedName("price")
+     * @var float
      */
     private $cost;
 
     /**
      * @ORM\Column(type="dateinterval", nullable=true)
      * @JMS\Groups("retrieve", "change")
+     * @var \DateInterval
      */
     private $rentTime;
 
