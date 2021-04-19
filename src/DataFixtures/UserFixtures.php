@@ -13,6 +13,9 @@ class UserFixtures extends Fixture
 {
     private $passwordEncoder;
 
+    private const MIN_TRANSACTION_COUNT = 100;
+    private const MAX_TRANSACTION_COUNT = 500;
+
     public function __construct(UserPasswordEncoderInterface $passwordEncoder)
     {
         $this->passwordEncoder = $passwordEncoder;
@@ -57,8 +60,8 @@ class UserFixtures extends Fixture
             $course->setTitle($courseName);
             $course->setCode('course_' . mb_strtolower(str_replace(' ', '_', $courseName)));
             $course->setType(random_int(0, 2));
-            $course->setCost($course->getType() === Course::TYPE_FREE ? 0 : round(random_int(10000, 500000) / 10, 2));
-            if ($course->getType() === Course::TYPE_RENT) {
+            $course->setCost('free' === $course->getStringType() ? 0 : round(random_int(10000, 500000) / 10, 2));
+            if ('rent' === $course->getStringType()) {
                 $course->setRentTime(new \DateInterval('P' . array_rand(array_flip([10, 30, 45, 60])) . 'D'));
             }
             $courses[] = $course;
@@ -68,24 +71,42 @@ class UserFixtures extends Fixture
         foreach ([$user, $admin] as $client) {
             $userCoursesCost = 0;
             $availableCourses = $courses;
-            for ($i = 0; $i !== 10; ++$i) {
+
+            $transactionCount = random_int(self::MIN_TRANSACTION_COUNT, self::MAX_TRANSACTION_COUNT);
+            $paymentsCount = (int)(0.8 * $transactionCount);
+            $depositsCount = $transactionCount - $paymentsCount;
+
+            for ($i = 0; $i !== $transactionCount; ++$i) {
                 $transaction = new Transaction();
                 $transaction->setCreatedAt(new \DateTime());
                 $transaction->setUser($client);
-                if ($i < 7) {
+
+                if ($i < $paymentsCount) {
                     $currentCourse = array_rand($availableCourses);
+
                     $transaction->setCourse($availableCourses[$currentCourse]);
-                    array_splice($availableCourses, $currentCourse, 1);
+
+                    if ('buy' === ($availableCourses[$currentCourse])->getStringType()) {
+                        array_splice($availableCourses, $currentCourse, 1);
+                    }
+
                     $transaction->setStringOperationType('payment');
+
                     $cost = $transaction->getCourse()->getCost();
                     $userCoursesCost += $cost;
                     $transaction->setValue($cost);
-                    if ($transaction->getCourse()->getType() === Course::TYPE_RENT) {
-                        $transaction->setValidUntil((new \DateTime())->add($transaction->getCourse()->getRentTime()));
+
+                    if ('rent' === $transaction->getCourse()->getStringType()) {
+                        $createdDaysAgo = random_int(10, 50);
+                        $transaction->setValidUntil(
+                            (new \DateTime())
+                                ->modify("- $createdDaysAgo days")
+                            ->add($transaction->getCourse()->getRentTime())
+                        );
                     }
                 } else {
                     $transaction->setStringOperationType('deposit');
-                    $transaction->setValue($userCoursesCost / 3);
+                    $transaction->setValue($userCoursesCost / $depositsCount);
                 }
                 $manager->persist($transaction);
             }

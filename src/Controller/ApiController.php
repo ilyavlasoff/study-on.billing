@@ -11,29 +11,25 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 abstract class ApiController extends AbstractController
 {
-    protected function responseWithValidationErrors(
-        ConstraintViolationListInterface $validationErrors,
-        SerializerInterface $serializer
-    ): Response {
-        $errors = [];
-        foreach ($validationErrors as $validationError) {
-            $errors[] = $validationError->getMessage();
-        }
+    private $serializer;
 
-        $failResponse = new FailResponse($errors);
+    public function __construct(SerializerInterface $serializer)
+    {
+        $this->serializer = $serializer;
+    }
+
+    protected function responseSuccessWithObject(
+        $data,
+        $status = Response::HTTP_OK
+    ): JsonResponse {
         return new JsonResponse(
-            $serializer->serialize($failResponse, 'json'),
-            Response::HTTP_BAD_REQUEST,
+            $this->serializer->serialize(
+                $data,
+                'json'
+            ),
+            $status,
             [],
             true
         );
-    }
-
-    protected function serializedResponse(
-        $data,
-        SerializerInterface $serializer,
-        $status = Response::HTTP_OK
-    ): JsonResponse {
-        return new JsonResponse($serializer->serialize($data, 'json'), $status, [], true);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Model;
+namespace App\Model\Response;
 
 use App\Entity\Course;
 use JMS\Serializer\Annotation as JMS;
@@ -39,13 +39,13 @@ class OwnedCourseDto
 
     /**
      * @var \DateTime | null
-     * @JMS\Type("datetime")
+     * @JMS\Type("DateTime<'Y-m-d\TH:i:sP'>")
      */
     private $ownedUntil;
 
     /**
      * @var \DateInterval | null
-     * @JMS\Type("dateinterval")
+     * @JMS\Type("DateInterval")
      */
     private $rentTime;
 
@@ -55,6 +55,7 @@ class OwnedCourseDto
         $this->type = $course->getStringType();
         $this->title = $course->getTitle();
         $this->price = $course->getCost();
+        $this->rentTime = $course->getRentTime();
     }
 
     /**

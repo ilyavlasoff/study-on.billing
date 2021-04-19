@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Model;
+namespace App\Model\Response;
 
 use App\Entity\Transaction;
 use JMS\Serializer\Annotation as JMS;
@@ -13,9 +13,14 @@ class TransactionHistoryDto
     private $id;
 
     /**
-     * @JMS\Type("string")
+     * @JMS\Type("DateTime<'Y-m-d\TH:i:sP'>")
      */
     private $createdAt;
+
+    /**
+     * @JMS\Type("DateTime<'Y-m-d\TH:i:sP'>")
+     */
+    private $validUntil;
 
     /**
      * @JMS\Type("string")
@@ -35,7 +40,8 @@ class TransactionHistoryDto
     public function __construct(Transaction $transaction)
     {
         $this->id = $transaction->getId();
-        $this->createdAt = $transaction->getCreatedAt()->format('c');
+        $this->createdAt = $transaction->getCreatedAt();
+        $this->validUntil = $transaction->getValidUntil();
         $this->type = $transaction->getStringOperationType();
         $this->amount = $transaction->getValue();
         if ($transaction->getCourse()) {
@@ -83,5 +89,20 @@ class TransactionHistoryDto
         return $this->amount;
     }
 
+    /**
+     * @return \DateTimeInterface|null
+     */
+    public function getValidUntil(): ?\DateTimeInterface
+    {
+        return $this->validUntil;
+    }
+
+    /**
+     * @param \DateTimeInterface|null $validUntil
+     */
+    public function setValidUntil(?\DateTimeInterface $validUntil): void
+    {
+        $this->validUntil = $validUntil;
+    }
 
 }

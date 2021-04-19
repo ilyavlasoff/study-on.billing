@@ -17,18 +17,16 @@ use App\Entity\User;
  */
 class UserController extends ApiController
 {
-    private $serializer;
-
     public function __construct(SerializerInterface $serializer)
     {
-        $this->serializer = $serializer;
+        parent::__construct($serializer);
     }
 
     /**
      * @Route("/current", name="api_current_user", methods={"GET"})
      *
      * @OA\Get(
-     *     path="/api/v1/users/current",
+     *     tags={"Users"},
      *     summary="Authenticated user object",
      *     @Security(name="Bearer"),
      *     @OA\Response(
@@ -41,6 +39,6 @@ class UserController extends ApiController
     public function currentUser(): Response
     {
         $user = $this->getUser();
-        return $this->serializedResponse($user, $this->serializer);
+        return $this->responseSuccessWithObject($user);
     }
 }

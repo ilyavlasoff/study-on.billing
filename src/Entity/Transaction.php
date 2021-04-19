@@ -64,7 +64,8 @@ class Transaction
      */
     public function validate(ExecutionContextInterface $context, $payload)
     {
-        if (!$this->validUntil && $this->getCourse() && 1 === $this->getStringOperationType()) {
+        if (!$this->validUntil && $this->getCourse() && 'rent' === $this->getCourse()->getStringType()
+            && 'payment' === $this->getStringOperationType()) {
             $context->buildViolation('Valid until value is required')
                 ->atPath('validUntil')
                 ->addViolation();

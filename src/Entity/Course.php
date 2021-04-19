@@ -35,9 +35,10 @@ class Course
 
     /**
      * @ORM\Column(type="string", unique=true, nullable=false, length=255)
-     * @Assert\NotBlank()
+     * @Assert\NotNull(message="Course code can not be nullable")
      * @Assert\Length(max="255", maxMessage="Maximal code string length is {{ limit }} symbols, given {{ value }}")
-     * @JMS\Groups("retrieve", "change")
+     * @JMS\Type("string")
+     * @JMS\Groups({"edit", "create"})
      * @var string
      */
     private $code;
@@ -45,20 +46,25 @@ class Course
     /**
      * @ORM\Column(type="smallint", nullable=false)
      * @Assert\NotNull(message="Type not found")
-     * @JMS\Groups("retrieve", "change")
+     * @JMS\Accessor(getter="getStringType", setter="setStringType")
+     * @JMS\Type("string")
+     * @JMS\Groups({"edit", "create"})
      */
     private $type;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=false)
-     * @JMS\Groups("change")
+     * @Assert\NotNull(message="Course must contain title")
+     * @JMS\Type("string")
+     * @JMS\Groups({"edit", "create"})
      * @var string
      */
     private $title;
 
     /**
      * @ORM\Column(type="float", nullable=true)
-     * @JMS\Groups("retrieve", "change")
+     * @JMS\Type("float")
+     * @JMS\Groups({"edit", "create"})
      * @JMS\SerializedName("price")
      * @var float
      */
@@ -66,7 +72,7 @@ class Course
 
     /**
      * @ORM\Column(type="dateinterval", nullable=true)
-     * @JMS\Groups("retrieve", "change")
+     * @JMS\Groups({"edit", "create"})
      * @var \DateInterval
      */
     private $rentTime;
@@ -94,7 +100,7 @@ class Course
                 ->addViolation();
         }
 
-        if ($this->type === array_flip(self::COURSE_TYPES['free']) && $this->cost) {
+        if ($this->type === array_flip(self::COURSE_TYPES)['free'] && $this->cost) {
             $context->buildViolation('Free course can not contain cost value')
                 ->atPath('cost')
                 ->addViolation();

@@ -1,0 +1,14 @@
+{% extends 'email.html.twig' %}
+
+{% block title %}
+    <h3>StudyOn: уведомление об окончании срока аренды</h3>
+{% endblock %}
+
+{% block body %}
+    <p>Уважаемый клиент! У вас есть курсы, срок аренды которых подходит к концу:</p>
+    <ul style="list-style-type: none;">
+        {% for item in notifications %}
+            <li>{{ item.course }} - {{ item.timeUntil }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

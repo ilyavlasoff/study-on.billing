@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Exception\ValidationException;
 use App\Model\User as UserDto;
 use App\Model\AuthToken;
 use App\Model\FailResponse;
@@ -26,6 +27,11 @@ use Nelmio\ApiDocBundle\Annotation\Model;
  */
 class AuthenticationController extends ApiController
 {
+    public function __construct(SerializerInterface $serializer)
+    {
+        parent::__construct($serializer);
+    }
+
     /**
      * @param Request $request
      * @param UserPasswordEncoderInterface $userPasswordEncoder
@@ -39,7 +45,7 @@ class AuthenticationController extends ApiController
      * @Route("/register", name="app_register", methods={"POST"})
      *
      * @OA\Post(
-     *     path="/api/v1/register",
+     *     tags={"Security"},
      *     summary="New user registration",
      *     @OA\RequestBody(
      *          required=true,
@@ -79,13 +85,13 @@ class AuthenticationController extends ApiController
         $userCredentials = $serializer->deserialize($request->getContent(), UserDto::class, 'json');
 
         if (count($validationErrors = $validator->validate($userCredentials))) {
-            return $this->responseWithValidationErrors($validationErrors, $serializer);
+            throw new ValidationException($validationErrors);
         }
 
         $user = User::fromDto($userCredentials, $userPasswordEncoder);
         // Проверка уникальности поля email
         if (count($uniqueValidationError = $validator->validate($user))) {
-            return $this->responseWithValidationErrors($uniqueValidationError, $serializer);
+            throw new ValidationException($uniqueValidationError);
         }
 
         $manager = $this->getDoctrine()->getManager();
@@ -102,14 +108,14 @@ class AuthenticationController extends ApiController
         $refreshTokenManager->save($refreshToken);
 
         $tokenResponse = new AuthToken($jwtToken, $refreshToken->getRefreshToken(), $user->getRoles());
-        return $this->serializedResponse($tokenResponse, $serializer, Response::HTTP_CREATED);
+        return $this->responseSuccessWithObject($tokenResponse);
     }
 
     /**
      * @Route("/auth", name="app_authenticate", methods={"POST"})
      *
      * @OA\Post(
-     *     path="/api/v1/auth",
+     *     tags={"Security"},
      *     summary="User authentication",
      *     @OA\RequestBody(
      *          required=true,
@@ -151,7 +157,7 @@ class AuthenticationController extends ApiController
      * @Route("/token/refresh", name="jwt_refresh", methods={"POST"})
      *
      * @OA\Post(
-     *     path="/api/v1/token/refresh",
+     *     tags={"Security"},
      *     summary="Jwt token refresh method",
      *     @Security(name="Bearer"),
      *     @OA\RequestBody(

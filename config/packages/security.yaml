@@ -22,9 +22,6 @@ security:
         docs:
             pattern: ^/api/v1/doc
             anonymous: true
-        public:
-            pattern: ^/api/v1/(courses)
-            anonymous: true
         api:
             pattern: ^/api/v1
             stateless: true
@@ -37,5 +34,4 @@ security:
          - { path: ^/api/v1/register, roles: IS_AUTHENTICATED_ANONYMOUSLY }
          - { path: ^/api/v1/doc, roles: IS_AUTHENTICATED_ANONYMOUSLY }
          - { path: ^/api/v1/token/refresh, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-         - { path: ^/api/v1/courses, roles: IS_AUTHENTICATED_ANONYMOUSLY }
          - { path: ^/api/v1, roles: IS_AUTHENTICATED_FULLY }

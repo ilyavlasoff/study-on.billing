@@ -5,7 +5,9 @@ namespace App\Service;
 use App\Entity\Course;
 use App\Entity\Transaction;
 use App\Entity\User;
+use App\Exception\CashNotEnoughException;
 use Doctrine\ORM\EntityManagerInterface;
+use JMS\Serializer\Serializer;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 class PaymentService
@@ -43,7 +45,7 @@ class PaymentService
         $this->connection->beginTransaction();
         try {
             if ($user->getBalance() < $course->getCost()) {
-                throw new \Exception('Cash not enough');
+                throw new CashNotEnoughException();
             }
             $transaction = new Transaction();
             $transaction->setUser($user);

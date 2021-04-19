@@ -5,9 +5,9 @@ namespace App\Controller;
 use App\Entity\Course;
 use App\Entity\Transaction;
 use App\Entity\User;
-use App\Model\CoursePaymentDto;
-use App\Model\OwnedCourseDto;
-use App\Model\TransactionHistoryDto;
+use App\Exception\ValueNotFoundException;
+use App\Model\Response\CoursePaymentDto;
+use App\Model\Response\TransactionHistoryDto;
 use App\Repository\CourseRepository;
 use App\Repository\TransactionRepository;
 use App\Service\PaymentService;
@@ -18,8 +18,12 @@ use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use OpenApi\Annotations as OA;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
 
 /**
  * Class CourseController
@@ -28,124 +32,37 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class PaymentController extends ApiController
 {
-    /**
-     * @param Request $request
-     * @param SerializerInterface $serializer
-     * @param EntityManagerInterface $entityManager
-     * @return JsonResponse
-     * @Route("/courses", name="course_list", methods={"GET"})
-     */
-    public function courseList(
-        SerializerInterface $serializer,
-        EntityManagerInterface $entityManager,
-        CourseRepository $courseRepository
-    ): JsonResponse {
-        $foundedCourseItems = $entityManager->getRepository(Course::class)->findAll();
-
-        return new JsonResponse($serializer->serialize(
-            $foundedCourseItems,
-            'json',
-            SerializationContext::create()->setInitialType('array<App\Model\Course>')
-        ), Response::HTTP_OK, [], true);
-    }
-
-    /**
-     * @param SerializerInterface $serializer
-     * @param CourseRepository $courseRepository
-     * @return JsonResponse
-     * @throws \Doctrine\DBAL\DBALException
-     * @Route("/labeled-courses", name="labeled_courses", methods={"GET"})
-     */
-    public function coursesWithOwningLabels(SerializerInterface $serializer, CourseRepository $courseRepository)
+    public function __construct(SerializerInterface $serializer)
     {
-        $user = $this->getUser();
-
-        $courses = $courseRepository->getCoursesList($user);
-
-        return new JsonResponse($serializer->serialize(
-            $courses,
-            'json',
-            SerializationContext::create()->setInitialType('array<App\Model\OwnedCourseDto>')
-        ), Response::HTTP_OK, [], true);
-    }
-
-    /**
-     * @param Request $request
-     * @param SerializerInterface $serializer
-     * @param TransactionRepository $transactionRepository
-     * @return JsonResponse
-     * @Route("/my-courses", name="valid_user_courses", methods={"GET"})
-     */
-    public function validUserCourseList(
-        Request $request,
-        SerializerInterface $serializer,
-        TransactionRepository $transactionRepository
-    ): JsonResponse {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        if (!$user) {
-            throw new UnauthorizedHttpException('User was not found');
-        }
-
-        $filteredCourses = $transactionRepository->getValidCoursesForUser($user);
-
-        return new JsonResponse($serializer->serialize(
-            $filteredCourses,
-            'json',
-            SerializationContext::create()->setInitialType('array<App\Entity\Course>')
-        ), Response::HTTP_OK, [], true);
-    }
-
-    /**
-     * @param $code
-     * @param EntityManagerInterface $entityManager
-     * @param SerializerInterface $serializer
-     * @param CourseRepository $courseRepository
-     * @return JsonResponse
-     * @throws EntityNotFoundException
-     * @throws \Doctrine\DBAL\DBALException
-     * @Route("/courses/{code}", name="course_item", methods={"GET"})
-     */
-    public function courseItem(
-        $code,
-        EntityManagerInterface $entityManager,
-        SerializerInterface $serializer,
-        CourseRepository $courseRepository
-    ): JsonResponse {
-        $course = $entityManager->getRepository(Course::class)->findOneBy(['code' => $code]);
-
-        if (!$course) {
-            throw new EntityNotFoundException('Course not found');
-        }
-
-        $ownedCourse = new OwnedCourseDto($course);
-        var_dump(gettype($this->getUser()));
-
-        if (($user = $this->getUser()) instanceof User) {
-            $owning = $courseRepository->getUserOwning($user, $course);
-
-            if ($owning) {
-                $ownedCourse->setOwned(true);
-
-                if ($endOwningTime = $owning['valid']) {
-                    $ownedCourse->setOwnedUntil($endOwningTime);
-                }
-            } else {
-                $ownedCourse->setOwned(false);
-            }
-        }
-
-        return $this->serializedResponse($ownedCourse, $serializer, Response::HTTP_OK);
+        parent::__construct($serializer);
     }
 
     /**
      * @param $code
      * @param EntityManagerInterface $entityManager
      * @param PaymentService $paymentService
+     * @param \JMS\Serializer\SerializerInterface $serializer
      * @return JsonResponse
-     * @throws EntityNotFoundException
+     * @throws \App\Exception\CashNotEnoughException
+     * @throws \App\Exception\ValueNotFoundException
      * @Route("/courses/{code}/pay", name="course_pay", methods={"POST"})
+     *
+     * @OA\Post(
+     *     tags={"Payments"},
+     *     summary="Pay method",
+     *     @Security(name="Bearer"),
+     *     @OA\Parameter(
+     *         in="path",
+     *         required=true,
+     *         name="code",
+     *         description="Code of course"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful payment report",
+     *         @OA\JsonContent(ref=@Model(type=CoursePaymentDto::class, groups={"Default"}))
+     *     )
+     * )
      */
     public function coursePayment(
         $code,
@@ -153,26 +70,18 @@ class PaymentController extends ApiController
         PaymentService $paymentService,
         SerializerInterface $serializer
     ): JsonResponse {
+        /** @var Course $course */
         $course = $entityManager->getRepository(Course::class)->findOneBy(['code' => $code]);
 
         if (!$course) {
-            throw new EntityNotFoundException('Course not found');
+            throw new ValueNotFoundException('Курс не найден');
         }
 
-        try {
-            $paidTransaction = $paymentService->coursePayment($this->getUser(), $course);
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $paidTransaction = $paymentService->coursePayment($this->getUser(), $course);
 
         $coursePaymentDto = new CoursePaymentDto($paidTransaction);
 
-        return new JsonResponse(
-            $serializer->serialize($coursePaymentDto, 'json'),
-            Response::HTTP_OK,
-            [],
-            true
-        );
+        return $this->responseSuccessWithObject($coursePaymentDto);
     }
 
     /**
@@ -182,6 +91,26 @@ class PaymentController extends ApiController
      * @param SerializerInterface $serializer
      * @return JsonResponse
      * @Route("/transactions", name="transactions_history", methods={"GET"})
+     * @throws \Doctrine\ORM\EntityNotFoundException
+     *
+     * @OA\Get(
+     *     tags={"Payments"},
+     *     summary="Retreive transactions history of specified user",
+     *     @Security(name="Bearer"),
+     *     @OA\Parameter(
+     *          in="query",
+     *          required=false,
+     *          name="filter",
+     *          description="Specifiy array of entity filtering params",
+     *          @OA\Items(type="array", @OA\Items(type="string"))
+     *     ),
+     *     @OA\Response(
+     *          response="200",
+     *          description="Array of transactions",
+     *          @OA\JsonContent(type="array",
+     *              @OA\Items(ref=@Model(type=TransactionHistoryDto::class, groups={"Default"})))
+     *     )
+     * )
      */
     public function transactionHistory(
         Request $request,
@@ -191,26 +120,37 @@ class PaymentController extends ApiController
     ): JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
+        /** @var array $filter */
+        $filter = $request->query->get('filter');
 
-        $type = $request->query->get('type');
+        $typedTransaction = null;
+        $requestCourse = null;
+        $skipExpired = null;
 
-        if ($type) {
-            $typedTransaction = new Transaction();
-            $typedTransaction->setStringOperationType($type);
-        } else {
-            $typedTransaction = null;
+        if ($filter) {
+            if (!is_array($filter)) {
+                throw new \Exception('Unexpected argument');
+            }
+
+            if (array_key_exists('type', $filter)) {
+                $typeFilter = $filter['type'];
+                $typedTransaction = new Transaction();
+                $typedTransaction->setStringOperationType($typeFilter);
+            }
+
+            if (array_key_exists('course_code', $filter)) {
+                $filterCourseCode = $filter['course_code'];
+                /** @var Course $requestCourse */
+                $requestCourse = $entityManager->getRepository(Course::class)->findOneBy(['code' => $filterCourseCode]);
+                if (!$requestCourse) {
+                    throw new EntityNotFoundException('Course was not found');
+                }
+            }
+
+            if (array_key_exists('skip_expired', $filter)) {
+                $skipExpired = (bool)($filter['skip_expired']);
+            }
         }
-
-        $courseCode = $request->query->get('course_code');
-
-        if ($courseCode) {
-            /** @var Course $requestCourse */
-            $requestCourse = $entityManager->getRepository(Course::class)->findOneBy(['code' => $courseCode]);
-        } else {
-            $requestCourse = null;
-        }
-
-        $skipExpired = $request->query->get('skip_expired');
 
         $filteredTransactions = $transactionRepository->filterUserTransactions(
             $user,
@@ -219,15 +159,11 @@ class PaymentController extends ApiController
             $skipExpired
         );
 
-        $transactionsDto = [];
+        $transactionsDtoList = [];
         foreach ($filteredTransactions as $filteredTransaction) {
-            $transactionsDto[] = new TransactionHistoryDto($filteredTransaction);
+            $transactionsDtoList[] = new TransactionHistoryDto($filteredTransaction);
         }
 
-        return new JsonResponse($serializer->serialize(
-            $transactionsDto,
-            'json',
-            SerializationContext::create()->setInitialType('array<App\Model\TransactionHistoryDto>')
-        ), Response::HTTP_OK, [], true);
+        return $this->responseSuccessWithObject($transactionsDtoList);
     }
 }
