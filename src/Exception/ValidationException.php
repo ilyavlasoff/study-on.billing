@@ -4,13 +4,12 @@ namespace App\Exception;
 
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
-use JMS\Serializer\Annotation as JMS;
 
 class ValidationException extends SerializableException
 {
     public function __construct(
         ConstraintViolationListInterface $errors,
-        $message = ""
+        $message = ''
     ) {
         $validationErrors = [];
         foreach ($errors as $validationError) {

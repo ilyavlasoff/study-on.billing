@@ -4,21 +4,22 @@ namespace App\Controller;
 
 use App\Exception\ValueNotFoundException;
 use App\Repository\CourseRepository;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Class UnauthorizedAccessController
- * @package App\Controller
+ *
  * @Route("/api/v1/u")
  */
 class UnauthorizedAccessController extends ApiController
 {
     /**
      * @param \App\Repository\CourseRepository $courseRepository
+     *
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @Route("/courses", name="ua_courses_list", methods={"GET"})
      *
@@ -42,7 +43,9 @@ class UnauthorizedAccessController extends ApiController
     /**
      * @param $code
      * @param \App\Repository\CourseRepository $courseRepository
+     *
      * @return \Symfony\Component\HttpFoundation\JsonResponse
+     *
      * @throws \App\Exception\ValueNotFoundException
      * @Route("/courses/{code}", name="ua_course", methods={"GET"})
      *

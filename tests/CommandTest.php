@@ -3,13 +3,11 @@
 namespace App\Tests;
 
 use App\Entity\Transaction;
-use PHPUnit\Framework\Assert;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DomCrawler\Crawler;
-use Symfony\Component\Mime\RawMessage;
 
 class CommandTest extends WebTestCase
 {

@@ -3,8 +3,6 @@
 namespace App\EventListener;
 
 use App\Exception\SerializableException;
-use App\Model\FailResponse;
-use JMS\Serializer\Context;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -43,7 +41,7 @@ class ExceptionListener
             $response->setStatusCode($statusCode);
 
             $genericException = new SerializableException('', $statusCode, '', [
-                $exception->getMessage()
+                $exception->getMessage(),
             ]);
 
             $context = (new SerializationContext())->setGroups('exception');

@@ -55,7 +55,7 @@ class PaymentEndingNotificationCommand extends Command
                 ->subject('Окончание аренды курсов Study-On')
                 ->htmlTemplate('payment_ending_notification.html.twig')
                 ->context([
-                    'notifications' => $endingCourse
+                    'notifications' => $endingCourse,
                 ]);
 
             try {

@@ -104,5 +104,4 @@ class TransactionHistoryDto
     {
         $this->validUntil = $validUntil;
     }
-
 }

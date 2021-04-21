@@ -169,7 +169,4 @@ class OwnedCourseDto
     {
         $this->rentTime = $rentTime;
     }
-
-
-
 }

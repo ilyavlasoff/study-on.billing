@@ -26,7 +26,9 @@ class CourseRepository extends ServiceEntityRepository
     /**
      * @param User $user
      * @param Course $course
+     *
      * @return mixed|null
+     *
      * @throws \Doctrine\DBAL\DBALException
      */
     public function getUserOwning(User $user, Course $course)
@@ -82,7 +84,9 @@ class CourseRepository extends ServiceEntityRepository
 
     /**
      * @param User $user
+     *
      * @return array
+     *
      * @throws \Doctrine\DBAL\DBALException
      */
     public function getCoursesList(User $user): array

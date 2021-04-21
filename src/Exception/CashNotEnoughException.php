@@ -2,8 +2,6 @@
 
 namespace App\Exception;
 
-use Throwable;
-
 class CashNotEnoughException extends SerializableException
 {
     public function __construct()

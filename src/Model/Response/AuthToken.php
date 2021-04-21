@@ -7,7 +7,6 @@ use OpenApi\Annotations as OA;
 
 /**
  * Class AuthToken
- * @package App\Model
  *
  * @OA\Schema(
  *     title="Authentication and refresh tokens",
@@ -100,7 +99,4 @@ class AuthToken
     {
         $this->refreshToken = $refreshToken;
     }
-
-
-
 }

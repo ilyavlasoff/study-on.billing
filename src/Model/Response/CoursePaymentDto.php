@@ -79,5 +79,4 @@ class CoursePaymentDto
     {
         $this->expiresAt = $expiresAt;
     }
-
 }

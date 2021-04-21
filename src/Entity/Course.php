@@ -6,10 +6,10 @@ use App\Repository\CourseRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as JMS;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
-use JMS\Serializer\Annotation as JMS;
 
 /**
  * @ORM\Entity(repositoryClass=CourseRepository::class)
@@ -21,7 +21,7 @@ class Course
     private const COURSE_TYPES = [
         0 => 'free',
         1 => 'rent',
-        2 => 'buy'
+        2 => 'buy',
     ];
 
     /**
@@ -29,6 +29,7 @@ class Course
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      * @JMS\Exclude()
+     *
      * @var int
      */
     private $id;
@@ -40,6 +41,7 @@ class Course
      * @Assert\Length(max="255", maxMessage="Maximal code string length is {{ limit }} symbols")
      * @JMS\Type("string")
      * @JMS\Groups({"edit", "create"})
+     *
      * @var string | null
      */
     private $code;
@@ -51,6 +53,7 @@ class Course
      * @JMS\Accessor(getter="getStringType", setter="setStringType")
      * @JMS\Type("string")
      * @JMS\Groups({"edit", "create"})
+     *
      * @var int | null
      */
     private $type;
@@ -62,6 +65,7 @@ class Course
      * @Assert\Length(max=255, maxMessage="Maximal title length is {{ limit }} symbols")
      * @JMS\Type("string")
      * @JMS\Groups({"edit", "create"})
+     *
      * @var string | null
      */
     private $title;
@@ -72,6 +76,7 @@ class Course
      * @JMS\Type("float")
      * @JMS\Groups({"edit", "create"})
      * @JMS\SerializedName("price")
+     *
      * @var float | null
      */
     private $cost;
@@ -79,6 +84,7 @@ class Course
     /**
      * @ORM\Column(type="dateinterval", nullable=true)
      * @JMS\Groups({"edit", "create"})
+     *
      * @var \DateInterval | null
      */
     private $rentTime;
@@ -285,5 +291,4 @@ class Course
     {
         $this->cost = $cost;
     }
-
 }

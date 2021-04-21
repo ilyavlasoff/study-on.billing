@@ -5,15 +5,13 @@ namespace App\Tests;
 use App\DataFixtures\UserFixtures;
 use App\Entity\Course;
 use Doctrine\ORM\EntityManagerInterface;
-use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
-use Symfony\Component\Security\Csrf\TokenStorage\TokenStorageInterface;
 
 class CourseTest extends AbstractTest
 {
     private $accounts = [
         'user' => 'user@test.com',
-        'admin' => 'admin@test.com'
+        'admin' => 'admin@test.com',
     ];
 
     private $incorrectCourseData;
@@ -30,7 +28,8 @@ class CourseTest extends AbstractTest
     protected function getFixtures(): array
     {
         /** @var UserPasswordEncoderInterface $upe */
-        $upe = self::$container->get("security.password_encoder");
+        $upe = self::$container->get('security.password_encoder');
+
         return [new UserFixtures($upe)];
     }
 
@@ -57,7 +56,7 @@ class CourseTest extends AbstractTest
                 'type' => 'buy',
                 'title' => 'Тестовый курс №3',
                 'price' => 123.45,
-            ]
+            ],
         ];
 
         $this->incorrectCourseData = [
@@ -70,7 +69,7 @@ class CourseTest extends AbstractTest
             [
                 'code' => 'тестовый_курс_2',
                 'title' => 'Тестовый курс №2',
-                'price' => 3498.33
+                'price' => 3498.33,
             ],
             [
                 'code' => 'тестовый_курс_3',
@@ -92,25 +91,25 @@ class CourseTest extends AbstractTest
                 'code' => 'тестовый_курс_некорректный',
                 'type' => 'rent',
                 'price' => 101.01,
-                'title' => 'Incorrect test course'
+                'title' => 'Incorrect test course',
             ],
             [
                 'code' => 'тестовый_курс_некорректный',
                 'type' => 'buy',
                 'rent_time' => 'P10D',
-                'title' => 'Incorrect test course'
+                'title' => 'Incorrect test course',
             ],
             [
                 'code' => 'тестовый_курс_некорректный',
                 'type' => 'free',
                 'rent_time' => 'P10D',
-                'title' => 'Incorrect test course'
+                'title' => 'Incorrect test course',
             ],
             [
                 'code' => 'тестовый_курс_некорректный',
                 'type' => 'free',
                 'price' => 5000,
-                'title' => 'Incorrect test course'
+                'title' => 'Incorrect test course',
             ],
             [
                 'code' => 'тестовый_курс_некорректный',
@@ -162,17 +161,17 @@ class CourseTest extends AbstractTest
                 'Non-rent course can not contain rent time value',
             ],
             [
-                'Free course can not contain cost value'
+                'Free course can not contain cost value',
             ],
             [
-                'Rent course can not be free'
+                'Rent course can not be free',
             ],
             [
-                'Incorrect course type, available only [free, rent, buy] types'
+                'Incorrect course type, available only [free, rent, buy] types',
             ],
             [
-                'Cost can not be negative'
-            ]
+                'Cost can not be negative',
+            ],
         ];
     }
 
@@ -183,7 +182,7 @@ class CourseTest extends AbstractTest
         $account = $asAdmin ? $this->accounts['admin'] : $this->accounts['user'];
         $data = json_encode([
             'username' => $account,
-            'password' => 'passwd'
+            'password' => 'passwd',
         ]);
         $client->request('post', '/api/v1/auth', [], [], ['CONTENT_TYPE' => 'application/json'], $data);
 
@@ -213,8 +212,8 @@ class CourseTest extends AbstractTest
     private function getHeaders($token)
     {
         return [
-            'HTTP_AUTHORIZATION' => 'Bearer '. $token,
-            'CONTENT_TYPE' => 'application/json'
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $token,
+            'CONTENT_TYPE' => 'application/json',
         ];
     }
 
@@ -275,13 +274,13 @@ class CourseTest extends AbstractTest
 
                 if (array_key_exists('price', $item)) {
                     $eq = $eq && $item['price'] == $course['cost'];
-                };
+                }
                 if (array_key_exists('rent_time', $item)) {
                     $eq = $eq && $item['rent_time'] == $course['rent_time'];
-                };
+                }
                 if (array_key_exists('valid_until', $item)) {
                     $eq = $eq && $item['valid_until'] === $course['owned_until'];
-                };
+                }
 
                 return $eq;
             });
@@ -472,11 +471,11 @@ class CourseTest extends AbstractTest
 
             if (array_key_exists('price', $editedCourseData)) {
                 $courseCorrect = $courseCorrect && $editedCourseData['price'] === $receivedCourse['price'];
-            };
+            }
 
             if (array_key_exists('rent_time', $editedCourseData)) {
                 $courseCorrect = $courseCorrect && $editedCourseData['rent_time'] === $receivedCourse['rent_time'];
-            };
+            }
 
             self::assertTrue($courseCorrect);
         }

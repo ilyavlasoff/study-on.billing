@@ -8,7 +8,6 @@ use Throwable;
 
 /**
  * Class AbstractSerializableException
- * @package App\Exception
  */
 class SerializableException extends \Exception
 {
@@ -44,7 +43,7 @@ class SerializableException extends \Exception
         return $this->code;
     }
 
-    public function __construct($message = "", $code = 0, $error = "", $details = [], Throwable $previous = null)
+    public function __construct($message = '', $code = 0, $error = '', $details = [], Throwable $previous = null)
     {
         if (!$message) {
             $message = 'Произошла ошибка.';
@@ -54,7 +53,7 @@ class SerializableException extends \Exception
             $this->error = 'ERROR';
         }
 
-        if ($code === 0) {
+        if (0 === $code) {
             $code = Response::HTTP_INTERNAL_SERVER_ERROR;
         }
 

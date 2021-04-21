@@ -69,7 +69,7 @@ class PaymentReportCommand extends Command
                 'period_start' => $lastMonthDate,
                 'period_end' => $currentDate,
                 'courses' => $courseStats,
-                'total_sum' => $earnedSum
+                'total_sum' => $earnedSum,
             ]);
 
         try {
@@ -79,6 +79,7 @@ class PaymentReportCommand extends Command
         }
 
         $output->writeln('done');
+
         return Command::SUCCESS;
     }
 }

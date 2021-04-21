@@ -4,10 +4,8 @@ namespace App\Service;
 
 use App\Entity\Course;
 use App\Entity\Transaction;
-use App\Entity\User;
 use App\Exception\CashNotEnoughException;
 use Doctrine\ORM\EntityManagerInterface;
-use JMS\Serializer\Serializer;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 class PaymentService
@@ -53,13 +51,14 @@ class PaymentService
             $transaction->setCreatedAt(new \DateTime());
             $transaction->setStringOperationType('payment');
             $transaction->setValue($course->getCost());
-            if ($course->getStringType() === 'rent') {
+            if ('rent' === $course->getStringType()) {
                 $transaction->setValidUntil((new \DateTime())->add($course->getRentTime()));
             }
             $this->entityManager->persist($transaction);
             $user->setBalance($user->getBalance() - $course->getCost());
             $this->entityManager->flush();
             $this->connection->commit();
+
             return $transaction;
         } catch (\Exception $e) {
             $this->connection->rollBack();

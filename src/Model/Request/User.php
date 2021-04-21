@@ -7,7 +7,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Class User
- * @package App\Model
  */
 class User
 {
@@ -64,5 +63,4 @@ class User
     {
         $this->password = $password;
     }
-
 }

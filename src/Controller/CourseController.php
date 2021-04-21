@@ -11,19 +11,19 @@ use App\Repository\CourseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializerInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use OpenApi\Annotations as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 /**
  * Class CourseController
- * @package App\Controller
+ *
  * @Route("/api/v1/courses")
  */
 class CourseController extends ApiController
@@ -33,7 +33,9 @@ class CourseController extends ApiController
      * @param SerializerInterface $serializer
      * @param ValidatorInterface $validator
      * @param EntityManagerInterface $entityManager
+     *
      * @return JsonResponse
+     *
      * @throws \Exception
      * @ISGranted("ROLE_SUPER_ADMIN")
      * @Route("/", name="course_create", methods={"POST"})
@@ -83,7 +85,9 @@ class CourseController extends ApiController
 
     /**
      * @param \App\Repository\CourseRepository $courseRepository
+     *
      * @return JsonResponse
+     *
      * @throws \Doctrine\DBAL\DBALException
      * @Route("/", name="course_list", methods={"GET"})
      *
@@ -112,7 +116,9 @@ class CourseController extends ApiController
      * @param $code
      * @param EntityManagerInterface $entityManager
      * @param CourseRepository $courseRepository
+     *
      * @return JsonResponse
+     *
      * @throws \App\Exception\ValueNotFoundException
      * @throws \Doctrine\DBAL\DBALException
      * @Route("/{code}", name="course_item", methods={"GET"})
@@ -176,7 +182,9 @@ class CourseController extends ApiController
      * @param EntityManagerInterface $entityManager
      * @param SerializerInterface $serializer
      * @param \Symfony\Component\Validator\Validator\ValidatorInterface $validator
+     *
      * @return JsonResponse
+     *
      * @throws \App\Exception\ValidationException
      * @throws \App\Exception\ValueNotFoundException
      * @Route("/{code}", name="courses_edit", methods={"POST"})
@@ -246,10 +254,10 @@ class CourseController extends ApiController
         return new JsonResponse(json_encode(['success' => 'true']), Response::HTTP_OK, [], true);
     }
 
-
     /**
      * @param $code
      * @param \Doctrine\ORM\EntityManagerInterface $entityManager
+     *
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      *
      * @Route("/{code}", name="courses_delete", methods={"DELETE"})

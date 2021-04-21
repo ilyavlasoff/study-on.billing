@@ -3,8 +3,8 @@
 namespace App\Tests;
 
 use App\DataFixtures\UserFixtures;
-use App\Model\Response\AuthToken;
 use App\Model\Request\User;
+use App\Model\Response\AuthToken;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Csrf\TokenStorage\TokenStorageInterface;
@@ -29,7 +29,8 @@ class AuthenticationTest extends AbstractTest
     protected function getFixtures(): array
     {
         /** @var UserPasswordEncoderInterface $upe */
-        $upe = self::$container->get("security.password_encoder");
+        $upe = self::$container->get('security.password_encoder');
+
         return [new UserFixtures($upe)];
     }
 
@@ -38,7 +39,7 @@ class AuthenticationTest extends AbstractTest
         parent::setUp();
         $this->serializer = self::$container->get('jms_serializer');
         $this->tokenStorage = self::$container->get('security.token_storage');
-        $this->passwordEncoder = self::$container->get("security.password_encoder");
+        $this->passwordEncoder = self::$container->get('security.password_encoder');
     }
 
     public function testCorrectRegistration(): void
@@ -72,28 +73,28 @@ class AuthenticationTest extends AbstractTest
                 'password' => '!23SuperP@$$w0rd32',
                 'messages' => [
                     'Email address "kjsfgkjf" is invalid',
-                ]
+                ],
             ],
             [
                 'email' => 'testuser@user.com',
                 'password' => '$Gm!h',
                 'messages' => [
                     'Password must be longer than 6 symbols',
-                ]
+                ],
             ],
             [
                 'email' => 'testuser@user.com',
                 'password' => bin2hex(random_bytes(700)),
                 'messages' => [
                     'Password must be shorted than 127 symbols',
-                ]
+                ],
             ],
             [
                 'email' => 'user@test.com',
                 'password' => '!23SuperP@$$w0rd32',
                 'messages' => [
                     'User with email "user@test.com" is already exists. Try to login instead',
-                ]
+                ],
             ],
             /*[
                 'email' => 'testuser@user.com',
@@ -130,20 +131,20 @@ class AuthenticationTest extends AbstractTest
             [
                 'email' => 'test@test.com',
                 'passworld' => '!23SuperP@$$w0rd32',
-            ]
+            ],
         ];
         $messages = [
             [
-                "Email must be specified",
-                "Email can not be blank"
+                'Email must be specified',
+                'Email can not be blank',
             ],
             [
-                "Password must be specified",
-                "Password can not be blank"
-            ]
+                'Password must be specified',
+                'Password can not be blank',
+            ],
         ];
 
-        for ($i = 0; $i !== count($invalidFields); $i++) {
+        for ($i = 0; $i !== count($invalidFields); ++$i) {
             $authenticationData = json_encode($invalidFields[$i]);
 
             $client->request('post', $regUrl, [], [], ['CONTENT_TYPE' => 'application/json'], $authenticationData);
@@ -163,7 +164,7 @@ class AuthenticationTest extends AbstractTest
     {
         $client = self::getClient();
         $regUrl = $client->getContainer()->get('router')->generate('app_authenticate');
-        $authenticationData = ['username' => 'user@test.com','password' => 'passwd'];
+        $authenticationData = ['username' => 'user@test.com', 'password' => 'passwd'];
 
         $client->request(
             'post',
@@ -188,7 +189,7 @@ class AuthenticationTest extends AbstractTest
         $client = self::getClient();
         $regUrl = $client->getContainer()->get('router')->generate('app_authenticate');
 
-        $authenticationData = ['username' => 'qwerty','password' => 'qwerty'];
+        $authenticationData = ['username' => 'qwerty', 'password' => 'qwerty'];
 
         $client->request(
             'post',
@@ -234,7 +235,7 @@ class AuthenticationTest extends AbstractTest
             '/api/v1/token/refresh',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json', 'HTTP_AUTHORIZATION' => 'Bearer '. $accessToken],
+            ['CONTENT_TYPE' => 'application/json', 'HTTP_AUTHORIZATION' => 'Bearer ' . $accessToken],
             json_encode(['refresh_token' => $refreshToken])
         );
 

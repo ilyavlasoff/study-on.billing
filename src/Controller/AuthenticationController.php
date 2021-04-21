@@ -10,18 +10,18 @@ use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Gesdinet\JWTRefreshTokenBundle\Service\RefreshToken;
 use JMS\Serializer\SerializerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use OpenApi\Annotations as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
 
 /**
  * Class AuthenticationController
- * @package App\Controller
+ *
  * @Route("/api/v1")
  */
 class AuthenticationController extends ApiController
@@ -38,7 +38,9 @@ class AuthenticationController extends ApiController
      * @param JWTTokenManagerInterface $tokenManager
      * @param RefreshTokenManagerInterface $refreshTokenManager
      * @param ValidatorInterface $validator
+     *
      * @return Response
+     *
      * @throws \Exception
      *
      * @Route("/register", name="app_register", methods={"POST"})
@@ -107,6 +109,7 @@ class AuthenticationController extends ApiController
         $refreshTokenManager->save($refreshToken);
 
         $tokenResponse = new AuthToken($jwtToken, $refreshToken->getRefreshToken(), $user->getRoles());
+
         return $this->responseSuccessWithObject($tokenResponse);
     }
 
@@ -151,6 +154,7 @@ class AuthenticationController extends ApiController
     /**
      * @param Request $request
      * @param RefreshToken $refreshToken
+     *
      * @return Response
      *
      * @Route("/token/refresh", name="jwt_refresh", methods={"POST"})

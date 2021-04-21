@@ -13,7 +13,7 @@ class PaymentTest extends AbstractTest
 {
     private $accounts = [
         'user' => 'user@test.com',
-        'admin' => 'admin@test.com'
+        'admin' => 'admin@test.com',
     ];
 
     /**
@@ -24,7 +24,8 @@ class PaymentTest extends AbstractTest
     protected function getFixtures(): array
     {
         /** @var UserPasswordEncoderInterface $upe */
-        $upe = self::$container->get("security.password_encoder");
+        $upe = self::$container->get('security.password_encoder');
+
         return [new UserFixtures($upe)];
     }
 
@@ -41,7 +42,7 @@ class PaymentTest extends AbstractTest
         $account = $asAdmin ? $this->accounts['admin'] : $this->accounts['user'];
         $data = json_encode([
             'username' => $account,
-            'password' => 'passwd'
+            'password' => 'passwd',
         ]);
         $client->request('post', '/api/v1/auth', [], [], ['CONTENT_TYPE' => 'application/json'], $data);
 
@@ -71,8 +72,8 @@ class PaymentTest extends AbstractTest
     private function getHeaders($token)
     {
         return [
-            'HTTP_AUTHORIZATION' => 'Bearer '. $token,
-            'CONTENT_TYPE' => 'application/json'
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $token,
+            'CONTENT_TYPE' => 'application/json',
         ];
     }
 
@@ -111,14 +112,14 @@ class PaymentTest extends AbstractTest
 
         $coursePrice = 0;
 
-        if ($user->getBalance() == 0) {
+        if (0 == $user->getBalance()) {
             $course = [
                 'code' => 'тестовый_курс_1',
                 'type' => 'free',
                 'title' => 'Тестовый курс №1',
             ];
         } else {
-            $coursePrice = random_int(0, (int)$user->getBalance());
+            $coursePrice = random_int(0, (int) $user->getBalance());
 
             $course = [
                 'code' => 'тестовый_курс_1',
@@ -154,15 +155,15 @@ class PaymentTest extends AbstractTest
 
         $data = json_decode($client->getResponse()->getContent(), true);
 
-        self::assertEquals(true, $data['success']);
+        self::assertTrue($data['success']);
         self::assertEquals($course['type'], $data['course_type']);
 
-        if ($course['type'] === 'rent') {
+        if ('rent' === $course['type']) {
             $expected = (new \DateTime('now'))->add(new \DateInterval($course['rent_time']));
             $received = new \DateTime($data['expires_at']);
 
-            $expected->setTime($expected->format("H"), $expected->format("i"));
-            $received->setTime($received->format("H"), $received->format("i"));
+            $expected->setTime($expected->format('H'), $expected->format('i'));
+            $received->setTime($received->format('H'), $received->format('i'));
             self::assertEquals($expected, $received);
         }
 
@@ -180,7 +181,7 @@ class PaymentTest extends AbstractTest
 
         $receivedCourse = json_decode($client->getResponse()->getContent(), true);
 
-        self::assertEquals(true, $receivedCourse['owned']);
+        self::assertTrue($receivedCourse['owned']);
     }
 
     public function testIncorrectPayment()
@@ -228,7 +229,7 @@ class PaymentTest extends AbstractTest
 
         $client->request(
             'post',
-            "/api/v1/courses/undefined_course/pay",
+            '/api/v1/courses/undefined_course/pay',
             [],
             [],
             $this->getHeaders($accessToken)
@@ -248,7 +249,7 @@ class PaymentTest extends AbstractTest
 
         $opTypes = [
             'deposit' => 1,
-            'payment' => 0
+            'payment' => 0,
         ];
 
         foreach (['deposit', 'payment'] as $transType) {
@@ -356,7 +357,7 @@ class PaymentTest extends AbstractTest
 
         $client->request(
             'get',
-            "/api/v1/transactions?filter[skip_expired]=1",
+            '/api/v1/transactions?filter[skip_expired]=1',
             [],
             [],
             $this->getHeaders($accessToken)
@@ -367,7 +368,6 @@ class PaymentTest extends AbstractTest
         $receivedTransaction = json_decode($client->getResponse()->getContent(), true);
 
         $exp = array_filter($receivedTransaction, function ($value) {
-
             return array_key_exists('valid_until', $value)
                 && (new \DateTime($value['valid_until']))->modify('+1 minute')
                 < (new \DateTime('now', new \DateTimeZone('Europe/Moscow')));

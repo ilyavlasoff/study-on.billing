@@ -51,7 +51,7 @@ class UserFixtures extends Fixture
             'Программирование на C и выполнение программ',
             'Базовые навыки Excel',
             'Введение в Linux',
-            'Секреты хороших текстов'
+            'Секреты хороших текстов',
         ];
 
         $courses = [];
@@ -74,7 +74,7 @@ class UserFixtures extends Fixture
             $availableCourses = $courses;
 
             $transactionCount = random_int(self::MIN_TRANSACTION_COUNT, self::MAX_TRANSACTION_COUNT);
-            $paymentsCount = (int)(0.8 * $transactionCount);
+            $paymentsCount = (int) (0.8 * $transactionCount);
             $depositsCount = $transactionCount - $paymentsCount;
 
             for ($i = 0; $i !== $transactionCount; ++$i) {
