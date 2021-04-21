@@ -36,46 +36,59 @@ class Course
     /**
      * @ORM\Column(type="string", unique=true, nullable=false, length=255)
      * @Assert\NotNull(message="Course code can not be nullable")
-     * @Assert\Length(max="255", maxMessage="Maximal code string length is {{ limit }} symbols, given {{ value }}")
+     * @Assert\NotBlank(message="Course code can not be blank")
+     * @Assert\Length(max="255", maxMessage="Maximal code string length is {{ limit }} symbols")
      * @JMS\Type("string")
      * @JMS\Groups({"edit", "create"})
-     * @var string
+     * @var string | null
      */
     private $code;
 
     /**
      * @ORM\Column(type="smallint", nullable=false)
      * @Assert\NotNull(message="Type not found")
+     * @Assert\NotBlank(message="Type can not be blank")
      * @JMS\Accessor(getter="getStringType", setter="setStringType")
      * @JMS\Type("string")
      * @JMS\Groups({"edit", "create"})
+     * @var int | null
      */
     private $type;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=false)
      * @Assert\NotNull(message="Course must contain title")
+     * @Assert\NotBlank(message="Course title can not be blank")
+     * @Assert\Length(max=255, maxMessage="Maximal title length is {{ limit }} symbols")
      * @JMS\Type("string")
      * @JMS\Groups({"edit", "create"})
-     * @var string
+     * @var string | null
      */
     private $title;
 
     /**
      * @ORM\Column(type="float", nullable=true)
+     * @Assert\Range(min=0, minMessage="Cost can not be negative")
      * @JMS\Type("float")
      * @JMS\Groups({"edit", "create"})
      * @JMS\SerializedName("price")
-     * @var float
+     * @var float | null
      */
     private $cost;
 
     /**
      * @ORM\Column(type="dateinterval", nullable=true)
      * @JMS\Groups({"edit", "create"})
-     * @var \DateInterval
+     * @var \DateInterval | null
      */
     private $rentTime;
+
+    /**
+     * @var bool
+     * @ORM\Column(type="boolean", nullable=false)
+     * @JMS\Exclude()
+     */
+    private $active;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Transaction", mappedBy="course")
@@ -90,12 +103,22 @@ class Course
      */
     public function validate(ExecutionContextInterface $context, $payload)
     {
-        if ($this->type === array_flip(self::COURSE_TYPES)['rent'] && !$this->rentTime) {
-            $context->buildViolation('This course must contain rent time')
-                ->atPath('rentTime')
-                ->addViolation();
-        } elseif ($this->type !== array_flip(self::COURSE_TYPES)['rent'] && $this->rentTime) {
-            $context->buildViolation('Rent course can not contain rent time value')
+        if ($this->type === array_flip(self::COURSE_TYPES)['rent']) {
+            if (!$this->rentTime) {
+                $context->buildViolation('This course must contain rent time')
+                    ->atPath('rentTime')
+                    ->addViolation();
+            }
+
+            if (!$this->cost) {
+                $context->buildViolation('Rent course can not be free')
+                    ->atPath('rentTime')
+                    ->addViolation();
+            }
+        }
+
+        if ($this->type !== array_flip(self::COURSE_TYPES)['rent'] && $this->rentTime) {
+            $context->buildViolation('Non-rent course can not contain rent time value')
                 ->atPath('rentTime')
                 ->addViolation();
         }
@@ -105,15 +128,21 @@ class Course
                 ->atPath('cost')
                 ->addViolation();
         }
+
+        if ($this->type && !array_key_exists($this->type, self::COURSE_TYPES)) {
+            $context->buildViolation('Incorrect course type, available only [free, rent, buy] types')
+                ->atPath('type')
+                ->addViolation();
+        }
     }
 
     public function setStringType(string $stringType): void
     {
         if (!array_key_exists($stringType, array_flip(self::COURSE_TYPES))) {
-            throw new \ValueError('This type doesnt exists');
+            $this->type = -1;
+        } else {
+            $this->type = array_flip(self::COURSE_TYPES)[$stringType];
         }
-
-        $this->type = array_flip(self::COURSE_TYPES)[$stringType];
     }
 
     public function getStringType(): string
@@ -129,42 +158,6 @@ class Course
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getCode(): ?string
-    {
-        return $this->code;
-    }
-
-    public function setCode(string $code): self
-    {
-        $this->code = $code;
-
-        return $this;
-    }
-
-    public function getType(): ?int
-    {
-        return $this->type;
-    }
-
-    public function setType(int $type): self
-    {
-        $this->type = $type;
-
-        return $this;
-    }
-
-    public function getCost(): ?float
-    {
-        return $this->cost;
-    }
-
-    public function setCost(?float $cost): self
-    {
-        $this->cost = $cost;
-
-        return $this;
     }
 
     /**
@@ -197,27 +190,100 @@ class Course
         return $this;
     }
 
-    public function getRentTime(): ?\DateInterval
-    {
-        return $this->rentTime;
-    }
-
-    public function setRentTime(?\DateInterval $rentTime): self
-    {
-        $this->rentTime = $rentTime;
-
-        return $this;
-    }
-
+    /**
+     * @return string|null
+     */
     public function getTitle(): ?string
     {
         return $this->title;
     }
 
-    public function setTitle(string $title): self
+    /**
+     * @param string|null $title
+     */
+    public function setTitle(?string $title): void
     {
         $this->title = $title;
-
-        return $this;
     }
+
+    /**
+     * @return \DateInterval|null
+     */
+    public function getRentTime(): ?\DateInterval
+    {
+        return $this->rentTime;
+    }
+
+    /**
+     * @param \DateInterval|null $rentTime
+     */
+    public function setRentTime(?\DateInterval $rentTime): void
+    {
+        $this->rentTime = $rentTime;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
+    /**
+     * @param bool $active
+     */
+    public function setActive(bool $active): void
+    {
+        $this->active = $active;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCode(): ?string
+    {
+        return $this->code;
+    }
+
+    /**
+     * @param string|null $code
+     */
+    public function setCode(?string $code): void
+    {
+        $this->code = $code;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getType(): ?int
+    {
+        return $this->type;
+    }
+
+    /**
+     * @param int|null $type
+     */
+    public function setType(?int $type): void
+    {
+        $this->type = $type;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getCost(): ?float
+    {
+        return $this->cost;
+    }
+
+    /**
+     * @param float|null $cost
+     */
+    public function setCost(?float $cost): void
+    {
+        $this->cost = $cost;
+    }
+
 }

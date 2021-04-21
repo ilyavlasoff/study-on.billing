@@ -4,6 +4,7 @@ namespace App\EventListener;
 
 use App\Exception\SerializableException;
 use App\Model\FailResponse;
+use JMS\Serializer\Context;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,7 +24,6 @@ class ExceptionListener
     public function onExceptionJsonResponse(ExceptionEvent $event)
     {
         $exception = $event->getThrowable();
-        $message = $exception->getMessage();
 
         $response = new JsonResponse();
 
@@ -33,14 +33,21 @@ class ExceptionListener
             $serializedException = $this->serializer->serialize($exception, 'json', $context);
             $response->setContent($serializedException);
         } else {
+            $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;
+
             if ($exception instanceof HttpExceptionInterface) {
-                $response->setStatusCode($exception->getStatusCode());
+                $statusCode = $exception->getStatusCode();
                 $response->headers->replace($exception->getHeaders());
-            } else {
-                $response->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
             }
-            $errorMessage = new FailResponse([$message]);
-            $response->setContent($this->serializer->serialize($errorMessage, 'json'));
+
+            $response->setStatusCode($statusCode);
+
+            $genericException = new SerializableException('', $statusCode, '', [
+                $exception->getMessage()
+            ]);
+
+            $context = (new SerializationContext())->setGroups('exception');
+            $response->setContent($this->serializer->serialize($genericException, 'json', $context));
         }
 
         $event->setResponse($response);

@@ -101,7 +101,8 @@ class CourseRepository extends ServiceEntityRepository
                                and (c.type <> 1 or (c.type = 1 and t.valid_until > now()))
                          ) as bc
                     where bc.n = 1
-                ) bcv on c2.id = bcv.c_id;
+                ) bcv on c2.id = bcv.c_id
+                where c2.active = true;
         ';
 
         $stmt = $conn->prepare($sql);

@@ -10,7 +10,7 @@ use JMS\Serializer\Annotation as Serializer;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use App\Model\User as UserDto;
+use App\Model\Request\User as UserDto;
 use OpenApi\Annotations as OA;
 
 /**

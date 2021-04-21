@@ -8,26 +8,21 @@ use App\Entity\User;
 use App\Exception\ValueNotFoundException;
 use App\Model\Response\CoursePaymentDto;
 use App\Model\Response\TransactionHistoryDto;
-use App\Repository\CourseRepository;
 use App\Repository\TransactionRepository;
 use App\Service\PaymentService;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\EntityNotFoundException;
-use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
 
 /**
  * Class CourseController
- * @package App\Controller
+ *
  * @Route("/api/v1")
  */
 class PaymentController extends ApiController
@@ -42,7 +37,9 @@ class PaymentController extends ApiController
      * @param EntityManagerInterface $entityManager
      * @param PaymentService $paymentService
      * @param \JMS\Serializer\SerializerInterface $serializer
+     *
      * @return JsonResponse
+     *
      * @throws \App\Exception\CashNotEnoughException
      * @throws \App\Exception\ValueNotFoundException
      * @Route("/courses/{code}/pay", name="course_pay", methods={"POST"})
@@ -71,10 +68,10 @@ class PaymentController extends ApiController
         SerializerInterface $serializer
     ): JsonResponse {
         /** @var Course $course */
-        $course = $entityManager->getRepository(Course::class)->findOneBy(['code' => $code]);
+        $course = $entityManager->getRepository(Course::class)->findOneBy(['code' => $code, 'active' => true]);
 
         if (!$course) {
-            throw new ValueNotFoundException('Курс не найден');
+            throw new ValueNotFoundException();
         }
 
         $paidTransaction = $paymentService->coursePayment($this->getUser(), $course);
@@ -89,8 +86,10 @@ class PaymentController extends ApiController
      * @param TransactionRepository $transactionRepository
      * @param EntityManagerInterface $entityManager
      * @param SerializerInterface $serializer
+     *
      * @return JsonResponse
      * @Route("/transactions", name="transactions_history", methods={"GET"})
+     *
      * @throws \Doctrine\ORM\EntityNotFoundException
      *
      * @OA\Get(
@@ -141,14 +140,16 @@ class PaymentController extends ApiController
             if (array_key_exists('course_code', $filter)) {
                 $filterCourseCode = $filter['course_code'];
                 /** @var Course $requestCourse */
-                $requestCourse = $entityManager->getRepository(Course::class)->findOneBy(['code' => $filterCourseCode]);
+                $requestCourse = $entityManager->getRepository(Course::class)->findOneBy(
+                    ['code' => $filterCourseCode, 'active' => true]
+                );
                 if (!$requestCourse) {
-                    throw new EntityNotFoundException('Course was not found');
+                    throw new ValueNotFoundException();
                 }
             }
 
             if (array_key_exists('skip_expired', $filter)) {
-                $skipExpired = (bool)($filter['skip_expired']);
+                $skipExpired = (bool) ($filter['skip_expired']);
             }
         }
 

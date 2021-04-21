@@ -8,16 +8,12 @@ use App\Exception\ValidationException;
 use App\Exception\ValueNotFoundException;
 use App\Model\Response\OwnedCourseDto;
 use App\Repository\CourseRepository;
-use App\Repository\TransactionRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\EntityNotFoundException;
 use JMS\Serializer\DeserializationContext;
-use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use OpenApi\Annotations as OA;
@@ -73,6 +69,7 @@ class CourseController extends ApiController
         $context = DeserializationContext::create()->setGroups(['create']);
         /** @var Course $createdCourse */
         $createdCourse = $serializer->deserialize($request->getContent(), Course::class, 'json', $context);
+        $createdCourse->setActive(true);
 
         if (count($validationErrors = $validator->validate($createdCourse))) {
             throw new ValidationException($validationErrors);
@@ -85,38 +82,7 @@ class CourseController extends ApiController
     }
 
     /**
-     * @param Request $request
-     * @param SerializerInterface $serializer
      * @param \App\Repository\CourseRepository $courseRepository
-     * @return JsonResponse
-     * @Route("/my-courses", name="valid_user_courses", methods={"GET"})
-     *
-     * @OA\Get(
-     *     tags={"Courses"},
-     *     summary="Get owned courses",
-     *     @Security(name="Bearer"),
-     *     @OA\Response(
-     *          response="200",
-     *          description="Course object",
-     *          @OA\JsonContent(type="array", @OA\Items(ref=@Model(type=Course::class, groups={"Default"})))
-     *     )
-     * )
-     */
-    public function validUserCourseList(
-        Request $request,
-        SerializerInterface $serializer,
-        CourseRepository $courseRepository
-    ): JsonResponse {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        $filteredCourses = $courseRepository->getValidCoursesForUser($user);
-
-        return $this->responseSuccessWithObject($filteredCourses);
-    }
-
-    /**
-     * @param EntityManagerInterface $entityManager
      * @return JsonResponse
      * @throws \Doctrine\DBAL\DBALException
      * @Route("/", name="course_list", methods={"GET"})
@@ -128,29 +94,16 @@ class CourseController extends ApiController
      *     @OA\Response(
      *          response="200",
      *          description="Owned course list",
-     *          @OA\JsonContent(
-     *              oneOf={
-     *                  @OA\Schema(ref=@Model(type=OwnedCourseDto::class, groups={"Default"})),
-     *                  @OA\Schema(ref=@Model(type=Course::class, groups={"Default"}))
-     *              }
-     *          )
+     *          @OA\JsonContent(@OA\Schema(ref=@Model(type=OwnedCourseDto::class, groups={"Default"})))
      *     )
      * )
      */
-    public function getCourseList(
-        EntityManagerInterface $entityManager
-    ): JsonResponse {
-        /** @var CourseRepository $courseRepository */
-        $courseRepository = $entityManager->getRepository(Course::class);
+    public function getCourseList(CourseRepository $courseRepository): JsonResponse
+    {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
 
-        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
-            /** @var \App\Entity\User $user */
-            $user = $this->getUser();
-
-            $courses = $courseRepository->getCoursesList($user);
-        } else {
-            $courses = $courseRepository->findAll();
-        }
+        $courses = $courseRepository->getCoursesList($user);
 
         return $this->responseSuccessWithObject($courses);
     }
@@ -171,17 +124,13 @@ class CourseController extends ApiController
      *     @OA\Parameter(
      *          in="path",
      *          name="code",
+     *          required=true,
      *          description="Code of course"
      *     ),
      *     @OA\Response(
      *          response="200",
      *          description="Owned course object",
-     *          @OA\JsonContent(
-     *              oneOf={
-     *                  @OA\Schema(ref=@Model(type=OwnedCourseDto::class, groups={"Default"})),
-     *                  @OA\Schema(ref=@Model(type=Course::class, groups={"Default"}))
-     *              }
-     *          )
+     *          @OA\JsonContent(@OA\Schema(ref=@Model(type=OwnedCourseDto::class, groups={"Default"})))
      *     ),
      *     @OA\Response(
      *          response="404",
@@ -195,34 +144,30 @@ class CourseController extends ApiController
         CourseRepository $courseRepository
     ): JsonResponse {
         /** @var Course $course */
-        $course = $entityManager->getRepository(Course::class)->findOneBy(['code' => $code]);
+        $course = $entityManager->getRepository(Course::class)->findOneBy(['code' => $code, 'active' => true]);
 
         if (!$course) {
-            throw new ValueNotFoundException('Курс с таким кодом не найден');
+            throw new ValueNotFoundException();
         }
 
-        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
-            $ownedCourse = new OwnedCourseDto($course);
+        $ownedCourse = new OwnedCourseDto($course);
 
-            /** @var User $user */
-            $user = $this->getUser();
+        /** @var User $user */
+        $user = $this->getUser();
 
-            $owning = $courseRepository->getUserOwning($user, $course);
+        $owning = $courseRepository->getUserOwning($user, $course);
 
-            if ($owning) {
-                $ownedCourse->setOwned(true);
+        if ($owning) {
+            $ownedCourse->setOwned(true);
 
-                if ($endOwningTime = $owning['valid']) {
-                    $ownedCourse->setOwnedUntil(new \DateTime($endOwningTime));
-                }
-            } else {
-                $ownedCourse->setOwned(false);
+            if ($endOwningTime = $owning['valid']) {
+                $ownedCourse->setOwnedUntil(new \DateTime($endOwningTime));
             }
-
-            return $this->responseSuccessWithObject($ownedCourse);
+        } else {
+            $ownedCourse->setOwned(false);
         }
 
-        return $this->responseSuccessWithObject($course);
+        return $this->responseSuccessWithObject($ownedCourse);
     }
 
     /**
@@ -238,8 +183,14 @@ class CourseController extends ApiController
      * @ISGranted("ROLE_SUPER_ADMIN")
      * @OA\Post(
      *     tags={"Management"},
-     *     summary="Allow to edit specified course",
+     *     summary="Edit fields of specified course",
      *     @Security(name="Bearer"),
+     *     @OA\Parameter(
+     *          in="path",
+     *          name="code",
+     *          required=true,
+     *          description="Code of course"
+     *     ),
      *     @OA\RequestBody(
      *          required=true,
      *          description="Edited course fields",
@@ -269,7 +220,7 @@ class CourseController extends ApiController
         $courseRepository = $entityManager->getRepository(Course::class);
 
         /** @var Course $targetCourse */
-        $targetCourse = $courseRepository->findOneBy(['code' => $code]);
+        $targetCourse = $courseRepository->findOneBy(['code' => $code, 'active' => true]);
 
         if (!$targetCourse) {
             throw new ValueNotFoundException();
@@ -279,43 +230,66 @@ class CourseController extends ApiController
         /** @var Course $editedCourse */
         $editedCourse = $serializer->deserialize($request->getContent(), Course::class, 'json', $context);
 
-        if ($code = $editedCourse->getCode()) {
-            $existSameCodes = $entityManager->getRepository(Course::class)->findOneBy(['code' => $code]);
-            if ($existSameCodes) {
-                throw new \Exception('This code is already exists');
-            }
-            $targetCourse->setCode($code);
-        }
+        $targetCourse->setCode($editedCourse->getCode());
+        $targetCourse->setType($editedCourse->getType());
+        $targetCourse->setTitle($editedCourse->getTitle());
+        $targetCourse->setCost($editedCourse->getCost());
+        $targetCourse->setRentTime($editedCourse->getRentTime());
 
-        if ($type = $editedCourse->getType()) {
-            if (count($errors = $validator->validatePropertyValue($targetCourse, 'type', $type)) > 0) {
-                throw new ValidationException($errors);
-            };
-            $targetCourse->setType($type);
-        }
-
-        if ($title = $editedCourse->getTitle()) {
-            if (count($errors = $validator->validatePropertyValue($targetCourse, 'title', $title)) > 0) {
-                throw new ValidationException($errors);
-            };
-            $targetCourse->setTitle($title);
-        }
-
-        if ($price = $editedCourse->getCost()) {
-            if (count($errors = $validator->validatePropertyValue($targetCourse, 'cost', $price)) > 0) {
-                throw new ValidationException($errors);
-            };
-            $targetCourse->setCost($price);
-        }
-
-        if ($rentTime = $editedCourse->getRentTime()) {
-            if (count($errors = $validator->validatePropertyValue($targetCourse, 'rentTime', $rentTime)) > 0) {
-                throw new ValidationException($errors);
-            };
-            $targetCourse->setRentTime($rentTime);
+        $errors = $validator->validate($targetCourse);
+        if (count($errors) > 0) {
+            throw new ValidationException($errors);
         }
 
         $entityManager->flush();
+
+        return new JsonResponse(json_encode(['success' => 'true']), Response::HTTP_OK, [], true);
+    }
+
+
+    /**
+     * @param $code
+     * @param \Doctrine\ORM\EntityManagerInterface $entityManager
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     *
+     * @Route("/{code}", name="courses_delete", methods={"DELETE"})
+     * @ISGranted("ROLE_SUPER_ADMIN")
+     *
+     * @OA\Delete (
+     *     tags={"Management"},
+     *     summary="Delete specified course",
+     *     @Security(name="Bearer"),
+     *     @OA\Parameter(
+     *          required=true,
+     *          in="path",
+     *          name="code",
+     *          description="Code of course"
+     *     ),
+     *     @OA\Response(
+     *          response=200,
+     *          description="New course successfully created",
+     *          @OA\JsonContent(
+     *              @OA\Schema(
+     *                  @OA\Property(
+     *                      property="success",
+     *                      type="bool"
+     *                  ),
+     *              ),
+     *          )
+     *      )
+     * )
+     */
+    public function deleteCourse($code, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $courseRepository = $entityManager->getRepository(Course::class);
+
+        /** @var Course $targetCourse */
+        $targetCourse = $courseRepository->findOneBy(['code' => $code, 'active' => true]);
+
+        if ($targetCourse) {
+            $targetCourse->setActive(false);
+            $entityManager->flush();
+        }
 
         return new JsonResponse(json_encode(['success' => 'true']), Response::HTTP_OK, [], true);
     }

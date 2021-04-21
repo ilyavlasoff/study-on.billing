@@ -212,4 +212,16 @@ abstract class AbstractTest extends WebTestCase
     {
         return preg_replace('#[\n\r]+#', ' ', $text);
     }
+
+    protected function assertJsonResponse($response, $statusCode = 200)
+    {
+        self::assertEquals(
+            $statusCode,
+            $response->getStatusCode(),
+            $response->getContent()
+        );
+        self::assertTrue(
+            $response->headers->contains('Content-Type', 'application/json')
+        );
+    }
 }

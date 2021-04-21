@@ -48,31 +48,29 @@ class TransactionRepository extends ServiceEntityRepository
         return $queryBuilder->getQuery()->getResult();
     }
 
-    public function getEndingCourses(\DateInterval $endsWithin)
+    public function getEndingCourses()
     {
-        $intervalInSeconds = (new \DateTime())->setTimeStamp(0)->add($endsWithin)->getTimeStamp();
-        $intervalInDays = $intervalInSeconds/86400;
-
         $qb = $this->getEntityManager()->getConnection()->createQueryBuilder();
         $qb
-            ->select('c2.title, c2.email, c.valid_until')
+            ->select('c2.title, c2.email, c2.valid_until')
             ->from(
                 sprintf(
                     '(%s)',
-                    $qb->select('c.id, c.title, bu.email, tr.valid_until,
+                    $this->getEntityManager()->getConnection()->createQueryBuilder()
+                        ->select('c.id, c.title, bu.email, tr.valid_until,
                row_number() over (partition by bu.id, c.id order by tr.valid_until desc) as n')
                         ->from('transaction', 'tr')
                         ->innerJoin('tr', 'course', 'c', 'c.id = tr.course_id')
                         ->innerJoin('tr', 'billing_user', 'bu', 'bu.id = tr.user_id')
                         ->where('c.type = :rent_type')
-                        ->setParameter('rent_type', 1)
                         ->getSQL()
                 ),
                 'c2'
             )
-            ->where("date(c2.valid_until) = current_date + interval :interval day")
+            ->where("date(c2.valid_until) = date(current_date + interval '2 days')")
             ->andWhere('c2.n = 1')
-            ->setParameter('interval', "$intervalInDays");
+            ->orderBy('c2.valid_until')
+            ->setParameter('rent_type', 1);
         $result = $qb->execute();
         $data = $result->fetchAll();
 
@@ -81,15 +79,17 @@ class TransactionRepository extends ServiceEntityRepository
 
     public function getCourseStats(\DateTime $fromDate, \DateTime $toDate)
     {
-        $qb = $this->createQueryBuilder('tr');
+        $qb = $this->createQueryBuilder('t');
 
         $stats = $qb->select('c.title as name, c.type, count(t.id) as buy_count, sum(t.value) as money_sum')
-            ->innerJoin(Course::class, 'c', Join::WITH, 'c.id = tr.course_id')
-            ->where($qb->expr()->between('t.created_at', ':from', ':to'))
+            ->innerJoin(Course::class, 'c', Join::WITH, 'c.id = t.course')
+            ->where($qb->expr()->between('t.createdAt', ':from', ':to'))
+            ->groupBy('c.title, c.type')
+            ->orderBy('sum(t.value)', 'desc')
             ->setParameter('from', $fromDate)
             ->setParameter('to', $toDate)
-            ->groupBy('c.title, c.type')
-            ->getQuery()->getResult();
+            ->getQuery()
+            ->getResult();
 
         return $stats;
     }
@@ -99,8 +99,8 @@ class TransactionRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('tr');
 
         $sumEarned = $qb
-            ->select('sum(t.value) as money_sum')
-            ->where($qb->expr()->between('t.created_at', ':from', ':to'))
+            ->select('sum(tr.value) as money_sum')
+            ->where($qb->expr()->between('tr.createdAt', ':from', ':to'))
             ->setParameter('from', $fromDate)
             ->setParameter('to', $toDate)
             ->getQuery()->getResult();

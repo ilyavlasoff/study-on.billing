@@ -6,7 +6,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ValueNotFoundException extends SerializableException
 {
-    protected $code = Response::HTTP_NOT_FOUND;
-
-    protected $message = 'Указанное значение не найдено';
+    public function __construct()
+    {
+        parent::__construct(
+            'Указанное значение не найдено',
+            Response::HTTP_NOT_FOUND,
+            'ERR_NOT_FOUND',
+            [],
+            null
+        );
+    }
 }

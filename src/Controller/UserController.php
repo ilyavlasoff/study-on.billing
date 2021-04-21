@@ -38,7 +38,9 @@ class UserController extends ApiController
      */
     public function currentUser(): Response
     {
+        /** @var User $user */
         $user = $this->getUser();
+
         return $this->responseSuccessWithObject($user);
     }
 }

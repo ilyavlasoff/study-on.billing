@@ -4,9 +4,8 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Exception\ValidationException;
-use App\Model\User as UserDto;
-use App\Model\AuthToken;
-use App\Model\FailResponse;
+use App\Model\Request\User as UserDto;
+use App\Model\Response\AuthToken;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Gesdinet\JWTRefreshTokenBundle\Service\RefreshToken;
 use JMS\Serializer\SerializerInterface;

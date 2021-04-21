@@ -3,11 +3,9 @@
 namespace App\Tests;
 
 use App\DataFixtures\UserFixtures;
-use App\Model\AuthToken;
-use App\Model\FailResponse;
-use App\Model\User;
+use App\Model\Response\AuthToken;
+use App\Model\Request\User;
 use JMS\Serializer\SerializerInterface;
-use Symfony\Component\Panther\PantherTestCase;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Csrf\TokenStorage\TokenStorageInterface;
 
@@ -30,7 +28,9 @@ class AuthenticationTest extends AbstractTest
 
     protected function getFixtures(): array
     {
-        return [new UserFixtures(self::$container->get("security.password_encoder"))];
+        /** @var UserPasswordEncoderInterface $upe */
+        $upe = self::$container->get("security.password_encoder");
+        return [new UserFixtures($upe)];
     }
 
     protected function setUp(): void
@@ -39,19 +39,6 @@ class AuthenticationTest extends AbstractTest
         $this->serializer = self::$container->get('jms_serializer');
         $this->tokenStorage = self::$container->get('security.token_storage');
         $this->passwordEncoder = self::$container->get("security.password_encoder");
-    }
-
-    protected function assertJsonResponse($response, $statusCode = 200)
-    {
-        self::assertEquals(
-            $statusCode,
-            $response->getStatusCode(),
-            $response->getContent()
-        );
-        self::assertTrue(
-            $response->headers->contains('Content-Type', 'application/json'),
-            $response->headers
-        );
     }
 
     public function testCorrectRegistration(): void
@@ -66,7 +53,7 @@ class AuthenticationTest extends AbstractTest
 
         $client->request('post', $regUrl, [], [], ['CONTENT_TYPE' => 'application/json'], $authenticationData);
 
-        $this->assertJsonResponse($client->getResponse(), 201);
+        $this->assertJsonResponse($client->getResponse());
         $responseData = $client->getResponse()->getContent();
         /** @var AuthToken $auth */
         $auth = $this->serializer->deserialize($responseData, AuthToken::class, 'json');
@@ -128,10 +115,46 @@ class AuthenticationTest extends AbstractTest
             $this->assertJsonResponse($client->getResponse(), 400);
             $responseData = $client->getResponse()->getContent();
 
-            /** @var FailResponse $auth */
-            $authError = $this->serializer->deserialize($responseData, FailResponse::class, 'json');
+            $error = json_decode($responseData, true);
+            self::assertEquals($error['error'], 'ERR_VALIDATION');
             foreach ($data['messages'] as $message) {
-                self::assertContains($message, $authError->getError());
+                self::assertContains($message, $error['details']);
+            }
+        }
+
+        $invalidFields = [
+            [
+                'efail' => 'test@test.com',
+                'password' => '!23SuperP@$$w0rd32',
+            ],
+            [
+                'email' => 'test@test.com',
+                'passworld' => '!23SuperP@$$w0rd32',
+            ]
+        ];
+        $messages = [
+            [
+                "Email must be specified",
+                "Email can not be blank"
+            ],
+            [
+                "Password must be specified",
+                "Password can not be blank"
+            ]
+        ];
+
+        for ($i = 0; $i !== count($invalidFields); $i++) {
+            $authenticationData = json_encode($invalidFields[$i]);
+
+            $client->request('post', $regUrl, [], [], ['CONTENT_TYPE' => 'application/json'], $authenticationData);
+
+            $this->assertJsonResponse($client->getResponse(), 400);
+            $responseData = $client->getResponse()->getContent();
+
+            $error = json_decode($responseData, true);
+            self::assertEquals($error['error'], 'ERR_VALIDATION');
+            foreach ($messages[$i] as $message) {
+                self::assertContains($message, $error['details']);
             }
         }
     }
@@ -151,7 +174,7 @@ class AuthenticationTest extends AbstractTest
             json_encode($authenticationData)
         );
 
-        $this->assertJsonResponse($client->getResponse(), 200);
+        $this->assertJsonResponse($client->getResponse());
         $responseData = $client->getResponse()->getContent();
 
         /** @var AuthToken $auth */
@@ -179,8 +202,46 @@ class AuthenticationTest extends AbstractTest
         $this->assertJsonResponse($client->getResponse(), 401);
         $responseData = $client->getResponse()->getContent();
 
-        /** @var  $auth */
         $auth = json_decode($responseData, true);
         self::assertEquals('Invalid credentials.', $auth['message']);
+    }
+
+    public function testRefreshToken()
+    {
+        $client = self::getClient();
+
+        $data = json_encode(['username' => 'user@test.com', 'password' => 'passwd']);
+
+        $client->request(
+            'post',
+            '/api/v1/auth',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            $data
+        );
+
+        $responseData = json_decode($client->getResponse()->getContent(), true);
+
+        $accessToken = $responseData['token'];
+        $refreshToken = $responseData['refresh_token'];
+
+        self::assertNotEmpty($refreshToken);
+        self::assertNotEmpty($accessToken);
+
+        $client->request(
+            'post',
+            '/api/v1/token/refresh',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json', 'HTTP_AUTHORIZATION' => 'Bearer '. $accessToken],
+            json_encode(['refresh_token' => $refreshToken])
+        );
+
+        self::assertJsonResponse($client->getResponse());
+
+        $responseData = json_decode($client->getResponse()->getContent(), true);
+
+        self::assertNotEmpty($responseData['token']);
     }
 }

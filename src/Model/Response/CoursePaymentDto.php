@@ -18,7 +18,7 @@ class CoursePaymentDto
     private $courseType;
 
     /**
-     * @JMS\Type("string")
+     * @JMS\Type("DateTime<'Y-m-d\TH:i:sP'>")
      */
     private $expiresAt;
 
@@ -28,7 +28,7 @@ class CoursePaymentDto
             $this->courseType = $transaction->getCourse()->getStringType();
         }
         if ($transaction->getValidUntil()) {
-            $this->expiresAt = $transaction->getValidUntil()->format('c');
+            $this->expiresAt = $transaction->getValidUntil();
         }
     }
 

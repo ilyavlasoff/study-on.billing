@@ -41,11 +41,11 @@ class PaymentReportCommand extends Command
         $courseTypeTranslate = [
             '0' => 'Бесплатный',
             '1' => 'Арендуемый',
-            '2' => 'Покупаемый',
+            '2' => 'Приобретаемый',
         ];
 
         $currentDate = new \DateTime();
-        $lastMonthDate = $currentDate->modify('-1 month');
+        $lastMonthDate = (new \DateTime())->modify('-1 month');
 
         /** @var \App\Repository\TransactionRepository $tr */
         $tr = $this->entityManager->getRepository(Transaction::class);
@@ -78,6 +78,7 @@ class PaymentReportCommand extends Command
             return Command::FAILURE;
         }
 
+        $output->writeln('done');
         return Command::SUCCESS;
     }
 }

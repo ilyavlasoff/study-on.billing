@@ -16,18 +16,18 @@
                 <th>Общая сумма</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody class="content">
             {% for course in courses %}
                 <tr>
                     <td>{{ course.name }}</td>
                     <td>{{ course.type }}</td>
                     <td>{{ course.buy_count }}</td>
-                    <td>{{ course.money_sum }}</td>
+                    <td>{{ course.money_sum | round(2, 'floor') }} руб.</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <h6>Итого: {{ total_sum }}</h6>
+    <h4>Итого: {{ total_sum | round(2, 'floor') }} руб.</h4>
 
 {% endblock %}

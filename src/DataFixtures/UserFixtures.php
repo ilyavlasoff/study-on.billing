@@ -58,6 +58,7 @@ class UserFixtures extends Fixture
         foreach ($courseNames as $courseName) {
             $course = new Course();
             $course->setTitle($courseName);
+            $course->setActive(true);
             $course->setCode('course_' . mb_strtolower(str_replace(' ', '_', $courseName)));
             $course->setType(random_int(0, 2));
             $course->setCost('free' === $course->getStringType() ? 0 : round(random_int(10000, 500000) / 10, 2));

@@ -2,9 +2,18 @@
 
 namespace App\Exception;
 
+use Throwable;
+
 class CashNotEnoughException extends SerializableException
 {
-    protected $code = 406;
-
-    protected $message = 'На вашем счету недостаточно средств';
+    public function __construct()
+    {
+        parent::__construct(
+            'На вашем счету недостаточно средств',
+            406,
+            'ERR_CASH',
+            [],
+            null
+        );
+    }
 }

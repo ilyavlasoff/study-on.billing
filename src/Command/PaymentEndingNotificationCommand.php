@@ -40,14 +40,15 @@ class PaymentEndingNotificationCommand extends Command
     {
         /** @var \App\Repository\TransactionRepository $tr */
         $tr = $this->entityManager->getRepository(Transaction::class);
-        $endingCoursesData = $tr->getEndingCourses(new \DateInterval('P1D'));
+        $endingCoursesData = $tr->getEndingCourses();
 
         $endingCourses = [];
         foreach ($endingCoursesData as $course) {
-            $endingCourses[$course['email']] = ['course' => $course['title'], 'timeUntil' => $course['valid_until']];
+            $endingCourses[$course['email']][] = ['course' => $course['title'], 'timeUntil' => $course['valid_until']];
         }
 
         foreach ($endingCourses as $ownerEmail => $endingCourse) {
+            $output->writeln("Send message to $ownerEmail");
             $email = (new TemplatedEmail())
                 ->from($this->parameterBag->get('send_from'))
                 ->to($ownerEmail)

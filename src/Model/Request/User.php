@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Model;
+namespace App\Model\Request;
 
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -13,12 +13,16 @@ class User
 {
     /**
      * @Serializer\Type("string")
+     * @Assert\NotNull(message="Email must be specified")
+     * @Assert\NotBlank(message="Email can not be blank")
      * @Assert\Email(message="Email address {{ value }} is invalid")
      */
     private $email;
 
     /**
      * @Serializer\Type("string")
+     * @Assert\NotNull(message="Password must be specified")
+     * @Assert\NotBlank(message="Password can not be blank")
      * @Assert\Length(
      *     min="6",
      *     max="127",

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Model;
+namespace App\Model\Response;
 
 use JMS\Serializer\Annotation as Serializer;
 use OpenApi\Annotations as OA;
