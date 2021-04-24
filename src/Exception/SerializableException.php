@@ -19,7 +19,7 @@ class SerializableException extends \Exception
 
     /**
      * @JMS\Groups({"exception"})
-     * @JMS\Type("array<string>")
+     * @JMS\Type("array")
      */
     public $details;
 
@@ -43,20 +43,13 @@ class SerializableException extends \Exception
         return $this->code;
     }
 
-    public function __construct($message = '', $code = 0, $error = '', $details = [], Throwable $previous = null)
-    {
-        if (!$message) {
-            $message = 'Произошла ошибка.';
-        }
-
-        if (!$error) {
-            $this->error = 'ERROR';
-        }
-
-        if (0 === $code) {
-            $code = Response::HTTP_INTERNAL_SERVER_ERROR;
-        }
-
+    public function __construct(
+        $message = 'Произошла ошибка.',
+        $code = Response::HTTP_INTERNAL_SERVER_ERROR,
+        $error = 'ERROR',
+        $details = [],
+        Throwable $previous = null
+    ) {
         $this->details = $details;
         $this->error = $error;
 

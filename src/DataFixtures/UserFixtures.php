@@ -13,8 +13,8 @@ class UserFixtures extends Fixture
 {
     private $passwordEncoder;
 
-    private const MIN_TRANSACTION_COUNT = 100;
-    private const MAX_TRANSACTION_COUNT = 500;
+    private const MIN_TRANSACTION_COUNT = 20;
+    private const MAX_TRANSACTION_COUNT = 50                    ;
 
     public function __construct(UserPasswordEncoderInterface $passwordEncoder)
     {

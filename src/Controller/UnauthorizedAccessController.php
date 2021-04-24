@@ -29,7 +29,7 @@ class UnauthorizedAccessController extends ApiController
      *     @OA\Response(
      *          response="200",
      *          description="Owned course list",
-     *          @OA\JsonContent(@OA\Schema(ref=@Model(type=Course::class, groups={"Default"})))
+     *          @OA\JsonContent(type="array", items=@OA\Items(ref=@Model(type=Course::class, groups={"Default"})))
      *     )
      * )
      */

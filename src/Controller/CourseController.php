@@ -98,7 +98,7 @@ class CourseController extends ApiController
      *     @OA\Response(
      *          response="200",
      *          description="Owned course list",
-     *          @OA\JsonContent(@OA\Schema(ref=@Model(type=OwnedCourseDto::class, groups={"Default"})))
+     *          @OA\JsonContent(@OA\Schema(type="array", items=@Model(type=OwnedCourseDto::class, groups={"Default"})))
      *     )
      * )
      */

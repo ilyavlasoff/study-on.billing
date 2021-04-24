@@ -41,9 +41,9 @@ class CourseRepository extends ServiceEntityRepository
             join billing_user on transaction.user_id = billing_user.id
             where billing_user.id = :usrId
             and course.id = :courseId
-            and operation_type = 0
-            and created_at < now()
-            and (course.type <> 1 or (course.type = 1 and valid_until > now()));
+            and (course.type <> 1 or (course.type = 1 and valid_until > now()))
+            order by valid_until desc
+            limit 1;
         ';
 
         $stmt = $conn->prepare($sql);

@@ -9,16 +9,13 @@ class ValidationException extends SerializableException
 {
     public function __construct(
         ConstraintViolationListInterface $errors,
-        $message = ''
+        $message = 'Ошибка валидации.'
     ) {
         $validationErrors = [];
         foreach ($errors as $validationError) {
-            $validationErrors[] = $validationError->getMessage();
+            $validationErrors[$validationError->getPropertyPath()] = $validationError->getMessage();
         }
 
-        if (!$message) {
-            $message = 'Ошибка валидации.';
-        }
         parent::__construct(
             $message,
             Response::HTTP_BAD_REQUEST,

@@ -131,7 +131,7 @@ class Course
 
         if ($this->type === array_flip(self::COURSE_TYPES)['free'] && $this->cost) {
             $context->buildViolation('Free course can not contain cost value')
-                ->atPath('cost')
+                ->atPath('type')
                 ->addViolation();
         }
 

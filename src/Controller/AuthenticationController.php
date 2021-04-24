@@ -180,8 +180,7 @@ class AuthenticationController extends ApiController
      *      ),
      *      @OA\Response(
      *          response="401",
-     *          description="Unauthorized message",
-     *          @OA\JsonContent(ref=@Model(type=FailResponse::class, groups={"Default"}))
+     *          description="Unauthorized message"
      *      )
      * )
      */

@@ -134,15 +134,12 @@ class CourseTest extends AbstractTest
 
         $this->incorrectMessages = [
             [
-                'Course code can not be nullable',
                 'Course code can not be blank',
             ],
             [
                 'Type can not be blank',
-                'Type not found',
             ],
             [
-                'Course must contain title',
                 'Course title can not be blank',
             ],
             [

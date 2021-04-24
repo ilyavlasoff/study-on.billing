@@ -135,11 +135,9 @@ class AuthenticationTest extends AbstractTest
         ];
         $messages = [
             [
-                'Email must be specified',
                 'Email can not be blank',
             ],
             [
-                'Password must be specified',
                 'Password can not be blank',
             ],
         ];
